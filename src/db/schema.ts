@@ -7,19 +7,24 @@ import {
   timestamp,
   integer,
   boolean,
+  uuid,
 } from "drizzle-orm/pg-core";
 
 /* ================= USERS ================= */
 
 export const users = pgTable("users", {
-  id: serial("id").primaryKey(),
-  email: varchar("email", { length: 255 }).unique().notNull(),
-  passwordHash: text("password_hash").notNull(),
-  role: varchar("role", { length: 50 }).notNull(), // Admin / HR / Employee
+  id: uuid("id").defaultRandom().primaryKey(),
+
+  email: varchar("email", { length: 255 }).notNull().unique(),
+  passwordHash: varchar("password_hash", { length: 255 }).notNull(),
+
+  name: varchar("name", { length: 255 }).notNull(),
+  role: varchar("role", { length: 50 }).default("admin"), // admin, hr, staff
+
   isActive: boolean("is_active").default(true),
+
   createdAt: timestamp("created_at").defaultNow(),
 });
-
 
 /* ================= EMPLOYEES ================= */
 
@@ -44,7 +49,6 @@ export const employees = pgTable("employees", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-
 /* ================= ATTENDANCE ================= */
 
 export const attendance = pgTable("attendance", {
@@ -60,7 +64,6 @@ export const attendance = pgTable("attendance", {
 
   createdAt: timestamp("created_at").defaultNow(),
 });
-
 
 /* ================= LEAVES ================= */
 

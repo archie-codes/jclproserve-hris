@@ -16,6 +16,8 @@ export default async function DashboardPage() {
     <div>
       <h1>Admin Dashboard</h1>
       <p>Welcome {user.email}</p>
+
+
     </div>
   );
 }
