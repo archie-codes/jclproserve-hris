@@ -83,3 +83,4 @@ export const leaves = pgTable("leaves", {
 
   createdAt: timestamp("created_at").defaultNow(),
 });
+
