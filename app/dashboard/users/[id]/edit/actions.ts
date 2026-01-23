@@ -10,7 +10,8 @@ export async function updateUserProfile(
   formData: FormData
 ) {
   const name = String(formData.get("name") || "").trim();
-  const role = String(formData.get("role"));
+  // const role = String(formData.get("role"));
+  const role = formData.get("role") as "ADMIN" | "HR" | "STAFF";
   const email = String(formData.get("email") || "").trim();
 
   if (!name) {
