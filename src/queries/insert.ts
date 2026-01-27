@@ -20,6 +20,6 @@ export async function createAdmin() {
     email: "admin@jcl-proserve.com",
     name: "System Admin",
     passwordHash,
-    role: "admin",
+    role: "ADMIN",
   });
 }
