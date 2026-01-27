@@ -9,10 +9,11 @@ async function seedAdmin() {
     email: "hr@jcl-proserve.com",
     name: "HR",
     passwordHash,
-    role: "hr",
+    role: "HR",
   });
 
   console.log("HR user created");
+  process.exit(0);
 }
 
 seedAdmin();
