@@ -124,13 +124,15 @@ export function EditEmployeeForm({
       const result = await updateEmployee(employee.id, data);
 
       if (result.success) {
-        toast.success("Employee record updated successfully");
+        toast.success("Employee record updated successfully", {
+          position: "top-center",
+        });
         onSuccess();
       } else {
-        toast.error("Failed to update record");
+        toast.error("Failed to update record", { position: "top-center" });
       }
     } catch (error) {
-      toast.error("Something went wrong");
+      toast.error("Something went wrong", { position: "top-center" });
       console.error(error);
     } finally {
       setIsLoading(false);
@@ -163,9 +165,17 @@ export function EditEmployeeForm({
             {/* IMAGE UPLOAD SECTION */}
             <div className="flex flex-row items-center gap-6 p-4 border rounded-xl bg-muted/30">
               <div className="relative">
-                <Avatar className="h-16 w-16 border-2 border-muted shadow-sm">
-                  <AvatarImage src={imagePreview} className="object-cover" />
-                  <AvatarFallback className="bg-muted">
+                <Avatar className="h-16 w-16 border-2 border-muted shadow-sm overflow-hidden">
+                  {/* 👇 FIX: Only render AvatarImage if there is a valid URL */}
+                  {imagePreview ? (
+                    <AvatarImage
+                      src={imagePreview}
+                      className="object-cover h-full w-full"
+                    />
+                  ) : null}
+
+                  {/* Fallback shows automatically if the image above is not rendered */}
+                  <AvatarFallback className="bg-muted flex items-center justify-center w-full h-full">
                     <User className="h-6 w-6 opacity-50" />
                   </AvatarFallback>
                 </Avatar>
@@ -181,7 +191,9 @@ export function EditEmployeeForm({
                           const url = res[0].url;
                           form.setValue("imageUrl", url);
                           setImagePreview(url);
-                          toast.success("Photo updated");
+                          toast.success("Photo updated. Do not forget to save changes.", {
+                            position: "top-center",
+                          });
                         }
                       }}
                       appearance={{

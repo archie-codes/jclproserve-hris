@@ -390,11 +390,11 @@ export function CreateEmployeeForm({
                           const url = res[0].url;
                           form.setValue("imageUrl", url);
                           setImagePreview(url);
-                          toast.success("Profile picture updated");
+                          toast.success("Profile picture updated", { position: "top-center" });
                         }
                       }}
                       onUploadError={(error: Error) => {
-                        toast.error(`Upload failed: ${error.message}`);
+                        toast.error(`Upload failed: ${error.message}`, { position: "top-center" });
                       }}
                       // 👇 Custom Styling to match your theme
                       appearance={{

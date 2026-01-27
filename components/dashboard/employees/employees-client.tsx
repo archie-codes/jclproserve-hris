@@ -331,15 +331,16 @@ export function EmployeesClient({ data }: { data: Employee[] }) {
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <Avatar className="h-9 w-9 rounded-full border border-muted/50 overflow-hidden">
-                          {/* 1. Try to show the image */}
-                          <AvatarImage
-                            src={employee.imageUrl || ""}
-                            alt={employee.firstName}  
-                            className="object-cover h-full w-full"
-                          />
+                          {/* 👇 FIX: Only render AvatarImage if employee.imageUrl exists */}
+                          {employee.imageUrl ? (
+                            <AvatarImage
+                              src={employee.imageUrl}
+                              alt={employee.firstName}
+                              className="object-cover h-full w-full"
+                            />
+                          ) : null}
 
-                          {/* 2. If no image, show these nice initials */}
-                          <AvatarFallback className="rounded-full font-bold bg-linear-to-tr from-blue-500/20 to-purple-500/20 text-blue-700 dark:text-blue-300 text-xs">
+                          <AvatarFallback className="flex items-center justify-center w-full h-full rounded-full font-bold bg-linear-to-tr from-blue-500/20 to-purple-500/20 text-blue-700 dark:text-blue-300 text-xs">
                             {employee.firstName[0]}
                             {employee.lastName[0]}
                           </AvatarFallback>
