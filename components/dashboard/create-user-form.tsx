@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { Eye, EyeOff } from "lucide-react";
-import { createUser } from "@/app/dashboard/users/new/actions";
+import { createUser } from "@/src/actions/users";
 
 export function CreateUserForm({ onSuccess }: { onSuccess: () => void }) {
   const [loading, setLoading] = useState(false);
@@ -89,6 +89,7 @@ export function CreateUserForm({ onSuccess }: { onSuccess: () => void }) {
           <SelectContent>
             <SelectItem value="ADMIN">ADMIN</SelectItem>
             <SelectItem value="HR">HR</SelectItem>
+            <SelectItem value="STAFF">STAFF</SelectItem>
           </SelectContent>
         </Select>
       </div>

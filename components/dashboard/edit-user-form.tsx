@@ -2,8 +2,8 @@
 
 import { useTransition, useState } from "react";
 import { useRouter } from "next/navigation";
-import { updateUserProfile } from "@/app/dashboard/users/[id]/edit/actions";
-import { resetUserPassword } from "@/app/dashboard/users/[id]/edit/reset-password";
+import { updateUserProfile } from "@/src/actions/users";
+import { resetUserPassword } from "@/src/actions/users";
 import { toast } from "sonner";
 import { Eye, EyeOff, Save, Lock, ShieldAlert } from "lucide-react";
 
@@ -39,7 +39,7 @@ export function EditUserForm({
 
   // Form States
   const [name, setName] = useState(user.name ?? "");
-  const [role, setRole] = useState<"ADMIN" | "HR">(user.role ?? "HR");
+  const [role, setRole] = useState<"ADMIN" | "HR" | "STAFF">(user.role ?? "HR");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
@@ -97,7 +97,7 @@ export function EditUserForm({
               <Label htmlFor="role">Role</Label>
               <Select
                 value={role}
-                onValueChange={(v) => setRole(v as "ADMIN" | "HR")}
+                onValueChange={(v) => setRole(v as "ADMIN" | "HR" | "STAFF")}
                 name="role"
               >
                 <SelectTrigger className="w-full">
@@ -106,6 +106,7 @@ export function EditUserForm({
                 <SelectContent>
                   <SelectItem value="ADMIN">ADMIN</SelectItem>
                   <SelectItem value="HR">HR</SelectItem>
+                  <SelectItem value="STAFF">STAFF</SelectItem>
                 </SelectContent>
               </Select>
             </div>

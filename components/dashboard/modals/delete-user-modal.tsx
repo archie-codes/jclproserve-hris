@@ -8,7 +8,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { deleteUser } from "@/app/dashboard/users/new/actions";
+import { deleteUser } from "@/src/actions/users";
 import { toast } from "sonner";
 import { useState } from "react";
 
