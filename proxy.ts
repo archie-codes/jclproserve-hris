@@ -42,7 +42,7 @@ export async function proxy(req: NextRequest) {
 
   // Not logged in → redirect to login
   if (!sessionCookie) {
-    return NextResponse.redirect(new URL("/login", req.url));
+    return NextResponse.redirect(new URL("/", req.url));
   }
 
   // FIX: Parse the JSON string into an object
@@ -51,7 +51,7 @@ export async function proxy(req: NextRequest) {
     sessionData = JSON.parse(sessionCookie);
   } catch (e) {
     // If parsing fails, the cookie is invalid -> clear it or redirect
-    return NextResponse.redirect(new URL("/login", req.url));
+    return NextResponse.redirect(new URL("/", req.url));
   }
 
   // Get user
