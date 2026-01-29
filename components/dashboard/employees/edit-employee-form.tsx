@@ -83,6 +83,52 @@ export function EditEmployeeForm({
     return format(new Date(dateString), "yyyy-MM-dd");
   };
 
+  // --- HELPER: AUTO-FORMAT GOVERNMENT IDS ---
+  const formatGovId = (
+    value: string,
+    type: "SSS" | "PHILHEALTH" | "PAGIBIG" | "TIN",
+  ) => {
+    // 1. Remove all non-digit characters
+    const clean = value.replace(/\D/g, "");
+
+    // 2. Format based on type
+    if (type === "SSS") {
+      // Format: XX-XXXXXXX-X (10 digits)
+      if (clean.length > 9)
+        return `${clean.slice(0, 2)}-${clean.slice(2, 9)}-${clean.slice(9, 10)}`;
+      if (clean.length > 2) return `${clean.slice(0, 2)}-${clean.slice(2)}`;
+      return clean;
+    }
+
+    if (type === "PHILHEALTH") {
+      // Format: XX-XXXXXXXXX-X (12 digits)
+      if (clean.length > 11)
+        return `${clean.slice(0, 2)}-${clean.slice(2, 11)}-${clean.slice(11, 12)}`;
+      if (clean.length > 2) return `${clean.slice(0, 2)}-${clean.slice(2)}`;
+      return clean;
+    }
+
+    if (type === "PAGIBIG") {
+      // Format: XXXX-XXXX-XXXX (12 digits)
+      if (clean.length > 8)
+        return `${clean.slice(0, 4)}-${clean.slice(4, 8)}-${clean.slice(8, 12)}`;
+      if (clean.length > 4) return `${clean.slice(0, 4)}-${clean.slice(4)}`;
+      return clean;
+    }
+
+    if (type === "TIN") {
+      // Format: XXX-XXX-XXX-XXX (9 to 12 digits)
+      if (clean.length > 9)
+        return `${clean.slice(0, 3)}-${clean.slice(3, 6)}-${clean.slice(6, 9)}-${clean.slice(9, 12)}`;
+      if (clean.length > 6)
+        return `${clean.slice(0, 3)}-${clean.slice(3, 6)}-${clean.slice(6)}`;
+      if (clean.length > 3) return `${clean.slice(0, 3)}-${clean.slice(3)}`;
+      return clean;
+    }
+
+    return clean;
+  };
+
   // --- INITIALIZE FORM WITH EXISTING DATA ---
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -191,18 +237,25 @@ export function EditEmployeeForm({
                           const url = res[0].url;
                           form.setValue("imageUrl", url);
                           setImagePreview(url);
-                          toast.success("Photo updated. Do not forget to save changes.", {
-                            position: "top-center",
-                          });
+                          toast.success(
+                            "Photo updated. Do not forget to save changes.",  
+                            {
+                              position: "top-center",
+                            },
+                          );
                         }
                       }}
+                      onUploadError={(error: Error) => {
+                        toast.error(`Upload failed: ${error.message}`);
+                      }}
+                      // 👇 UPDATED APPEARANCE to match the User Form style
                       appearance={{
                         button:
-                          "bg-white dark:bg-zinc-900 !text-foreground border border-input h-8 px-3 text-xs",
+                          "bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 rounded-md shadow-sm transition-colors text-sm font-medium",
                         container: "w-max",
-                        allowedContent: "hidden",
+                        allowedContent: "hidden", // We hide the "Images up to 4MB" text to keep it clean, or remove this line to show it
                       }}
-                      content={{ button: "Change" }}
+                      // 👇 REMOVED the 'content' prop so it shows the default percentage/loading state
                     />
                   </div>
                   {imagePreview && (
@@ -493,7 +546,7 @@ export function EditEmployeeForm({
           {/* --- GOVT TAB --- */}
           <TabsContent value="govt" className="space-y-4 py-4">
             <div className="grid grid-cols-12 gap-4">
-              {/* SSS */}
+              {/* SSS (XX-XXXXXXX-X) */}
               <div className="col-span-12 md:col-span-6">
                 <FormField
                   control={form.control}
@@ -502,13 +555,21 @@ export function EditEmployeeForm({
                     <FormItem>
                       <FormLabel>SSS Number</FormLabel>
                       <FormControl>
-                        <Input {...field} />
+                        <Input
+                          {...field}
+                          placeholder="00-0000000-0"
+                          maxLength={12}
+                          onChange={(e) =>
+                            field.onChange(formatGovId(e.target.value, "SSS"))
+                          }
+                        />
                       </FormControl>
                     </FormItem>
                   )}
                 />
               </div>
-              {/* PhilHealth */}
+
+              {/* PhilHealth (XX-XXXXXXXXX-X) */}
               <div className="col-span-12 md:col-span-6">
                 <FormField
                   control={form.control}
@@ -517,13 +578,23 @@ export function EditEmployeeForm({
                     <FormItem>
                       <FormLabel>PhilHealth</FormLabel>
                       <FormControl>
-                        <Input {...field} />
+                        <Input
+                          {...field}
+                          placeholder="00-000000000-0"
+                          maxLength={14}
+                          onChange={(e) =>
+                            field.onChange(
+                              formatGovId(e.target.value, "PHILHEALTH"),
+                            )
+                          }
+                        />
                       </FormControl>
                     </FormItem>
                   )}
                 />
               </div>
-              {/* PagIBIG */}
+
+              {/* Pag-IBIG (XXXX-XXXX-XXXX) */}
               <div className="col-span-12 md:col-span-6">
                 <FormField
                   control={form.control}
@@ -532,13 +603,23 @@ export function EditEmployeeForm({
                     <FormItem>
                       <FormLabel>Pag-IBIG</FormLabel>
                       <FormControl>
-                        <Input {...field} />
+                        <Input
+                          {...field}
+                          placeholder="0000-0000-0000"
+                          maxLength={14}
+                          onChange={(e) =>
+                            field.onChange(
+                              formatGovId(e.target.value, "PAGIBIG"),
+                            )
+                          }
+                        />
                       </FormControl>
                     </FormItem>
                   )}
                 />
               </div>
-              {/* TIN */}
+
+              {/* TIN (XXX-XXX-XXX-XXX) */}
               <div className="col-span-12 md:col-span-6">
                 <FormField
                   control={form.control}
@@ -547,14 +628,23 @@ export function EditEmployeeForm({
                     <FormItem>
                       <FormLabel>TIN</FormLabel>
                       <FormControl>
-                        <Input {...field} />
+                        <Input
+                          {...field}
+                          placeholder="000-000-000-000"
+                          maxLength={15}
+                          onChange={(e) =>
+                            field.onChange(formatGovId(e.target.value, "TIN"))
+                          }
+                        />
                       </FormControl>
                     </FormItem>
                   )}
                 />
               </div>
+
               <Separator className="col-span-12 my-2" />
-              {/* Bank Info */}
+
+              {/* Bank Info (No formatting enforced, just text) */}
               <div className="col-span-12 md:col-span-6">
                 <FormField
                   control={form.control}
@@ -563,12 +653,13 @@ export function EditEmployeeForm({
                     <FormItem>
                       <FormLabel>Bank Name</FormLabel>
                       <FormControl>
-                        <Input {...field} />
+                        <Input {...field} placeholder="e.g. BDO / BPI" />
                       </FormControl>
                     </FormItem>
                   )}
                 />
               </div>
+
               <div className="col-span-12 md:col-span-6">
                 <FormField
                   control={form.control}

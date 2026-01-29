@@ -25,6 +25,7 @@ export default async function UsersPage() {
     email: u.email,
     role: u.role ?? "HR",
     isActive: u.isActive ?? true,
+    image: u.image,
   }));
 
   return (

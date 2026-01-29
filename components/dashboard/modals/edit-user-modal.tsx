@@ -1,55 +1,3 @@
-// // "use client";
-
-// // import { Modal } from "@/components/ui/modal";
-// // import { EditUserForm } from "../edit-user-form";
-
-// // export function EditUserModal({
-// //   open,
-// //   onClose,
-// //   user,
-// // }: {
-// //   open: boolean;
-// //   onClose: () => void;
-// //   user: any;
-// // }) {
-// //   return (
-// //     <Modal open={open} onClose={onClose}>
-// //       <h2 className="text-lg font-semibold mb-4">Edit User</h2>
-// //       <EditUserForm user={user} />
-// //     </Modal>
-// //   );
-// // }
-
-
-// "use client";
-
-// import { Modal } from "@/components/ui/modal";
-// import { EditUserForm } from "../edit-user-form";
-
-// export function EditUserModal({
-//   open,
-//   onClose,
-//   user,
-// }: {
-//   open: boolean;
-//   onClose: () => void;
-//   user: any;
-// }) {
-//   return (
-//     <Modal open={open} onClose={onClose}>
-//       <div className="mb-4">
-//         <h2 className="text-lg font-semibold">Edit User</h2>
-//         <p className="text-sm text-muted-foreground">
-//           Make changes to the user profile here. Click save when you're done.
-//         </p>
-//       </div>
-      
-//       {/* ✅ Pass onClose to the form so it can close the modal on success */}
-//       <EditUserForm user={user} onSuccess={onClose} />
-//     </Modal>
-//   );
-// }
-
 "use client";
 
 import {
@@ -77,7 +25,8 @@ type Props = {
 export function EditUserModal({ open, user, onOpenChange }: Props) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      {/* 👇 FIX: Added max-h-[85vh] and overflow-y-auto */}
+      <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Edit User</DialogTitle>
         </DialogHeader>

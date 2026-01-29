@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { updateUserProfile } from "@/src/actions/users";
 import { resetUserPassword } from "@/src/actions/users";
 import { toast } from "sonner";
-import { Eye, EyeOff, Save, Lock, ShieldAlert } from "lucide-react";
+import { Eye, EyeOff, Save, Lock, ShieldAlert, User } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,14 +25,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { UploadButton } from "@/lib/uploadthing"; // 👈 Ensure this path is correct
 
-// ✅ 1. Add onSuccess to the props definition
-export function EditUserForm({ 
-  user, 
-  onSuccess 
-}: { 
-  user: any; 
-  onSuccess: () => void; 
+export function EditUserForm({
+  user,
+  onSuccess,
+}: {
+  user: any;
+  onSuccess: () => void;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -40,19 +41,22 @@ export function EditUserForm({
   // Form States
   const [name, setName] = useState(user.name ?? "");
   const [role, setRole] = useState<"ADMIN" | "HR" | "STAFF">(user.role ?? "HR");
+  // 👇 1. Add Image State
+  const [imageUrl, setImageUrl] = useState(user.image || "");
+
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
   /* -------- PROFILE UPDATE -------- */
   function handleProfileUpdate(formData: FormData) {
     formData.set("role", role);
+    // 👇 2. Ensure image URL is sent to server
+    formData.set("image", imageUrl);
 
     startTransition(async () => {
       await updateUserProfile(user.id, formData);
-      router.refresh(); 
+      router.refresh();
       toast.success("Profile updated successfully", { position: "top-center" });
-      
-      // ✅ 2. Close modal on success
       onSuccess();
     });
   }
@@ -63,8 +67,6 @@ export function EditUserForm({
       await resetUserPassword(user.id, formData);
       setPassword("");
       toast.success("Password reset successfully", { position: "top-center" });
-      
-      // ✅ Optional: Close modal after password reset too
       onSuccess();
     });
   }
@@ -76,11 +78,51 @@ export function EditUserForm({
         <CardHeader>
           <CardTitle>Account Information</CardTitle>
           <CardDescription>
-            Update the user's display name and access role.
+            Update the user's display name, avatar, and access role.
           </CardDescription>
         </CardHeader>
         <form action={handleProfileUpdate}>
           <CardContent className="space-y-4">
+            {/* 👇 3. AVATAR UPLOAD SECTION */}
+            <div className="flex flex-col items-center gap-4 mb-6">
+              <Avatar className="h-24 w-24 border-2 border-muted">
+                {imageUrl ? (
+                  <AvatarImage src={imageUrl} className="object-cover" />
+                ) : null}
+                <AvatarFallback className="bg-muted">
+                  <User className="h-10 w-10 opacity-50" />
+                </AvatarFallback>
+              </Avatar>
+
+              <div className="flex flex-col items-center">
+                <UploadButton
+                  endpoint="userImage"
+                  onClientUploadComplete={(res) => {
+                    if (res?.[0]) {
+                      setImageUrl(res[0].url);
+                      toast.success("Image uploaded!", { position: "top-center" });
+                    }
+                  }}
+                  onUploadError={(error: Error) => {
+                    toast.error(`Upload failed: ${error.message}`, { position: "top-center" });
+                  }}
+                  // 👇 ADD THIS STYLING BLOCK
+                  appearance={{
+                    button:
+                      "bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 rounded-md shadow-sm transition-colors",
+                    allowedContent: "text-muted-foreground text-xs",
+                  }}
+                  // 👆 END STYLING BLOCK
+                />
+                <p className="text-xs text-muted-foreground mt-2">
+                  Allowed: JPG, PNG (Max 4MB)
+                </p>
+              </div>
+            </div>
+
+            {/* Hidden Input to store the URL for form submission */}
+            <input type="hidden" name="image" value={imageUrl} />
+
             <div className="space-y-2">
               <Label htmlFor="name">Full Name</Label>
               <Input
@@ -121,16 +163,10 @@ export function EditUserForm({
                 className="bg-muted cursor-not-allowed"
               />
             </div>
-
           </CardContent>
-          
-          {/* ✅ 3. Updated Footer with Cancel Button */}
+
           <CardFooter className="border-t px-6 py-4 flex justify-end gap-2">
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={onSuccess} // Closes modal
-            >
+            <Button type="button" variant="outline" onClick={onSuccess}>
               Cancel
             </Button>
             <Button type="submit" disabled={pending}>
@@ -146,7 +182,7 @@ export function EditUserForm({
         </form>
       </Card>
 
-      {/* CARD 2: SECURITY & DANGER ZONE */}
+      {/* CARD 2: SECURITY (Kept exactly as you had it) */}
       <Card className="border-destructive/50">
         <CardHeader>
           <div className="flex items-center gap-2 text-destructive">
@@ -154,7 +190,7 @@ export function EditUserForm({
             <CardTitle>Security</CardTitle>
           </div>
           <CardDescription>
-            Manage password and security settings. proceed with caution.
+            Manage password and security settings. Proceed with caution.
           </CardDescription>
         </CardHeader>
 

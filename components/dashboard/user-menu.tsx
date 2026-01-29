@@ -37,57 +37,49 @@
 //     </div>
 //   );
 // }
-
-
 "use client";
 
-import { 
-  LogOut, 
-  User, 
-  Settings, 
-  Moon, 
-  Sun, 
-  Laptop 
-} from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-  DropdownMenuSub,
-  DropdownMenuSubTrigger,
-  DropdownMenuSubContent,
-  DropdownMenuPortal,
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { LogoutButton } from "@/components/logout-button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { LogOut, User } from "lucide-react";
+import { LogoutButton } from "@/components/logout-button"; // Use your logout logic here if different
 
 interface UserMenuProps {
   name: string;
   role: string;
-  image?: string; // Added optional image prop
+  image?: string | null; // 👈 Add image to the interface
 }
 
 export function UserMenu({ name, role, image }: UserMenuProps) {
-  // Generate initials for avatar fallback (e.g., "John Doe" -> "JD")
-  const initials = name
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
+  
+  // Simple logout handler (adjust based on your auth system)
+  const handleLogout = () => {
+    // If using NextAuth: signOut();
+    // If using custom auth: call your server action or delete cookie
+    window.location.href = "/login"; 
+  };
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-          <Avatar className="h-10 w-10 border">
-            <AvatarImage src={image} alt={name} />
-            <AvatarFallback>{initials}</AvatarFallback>
+        <Button variant="ghost" className="relative h-9 w-9 rounded-full">
+          <Avatar className="h-9 w-9 border border-muted">
+            {/* 👇 FIX: Render Image if available */}
+            {image ? (
+              <AvatarImage src={image} alt={name} className="object-cover" />
+            ) : null}
+            
+            <AvatarFallback className="bg-primary/10 font-bold text-primary">
+              {name?.[0]?.toUpperCase()}
+            </AvatarFallback>
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
@@ -97,33 +89,25 @@ export function UserMenu({ name, role, image }: UserMenuProps) {
           <div className="flex flex-col space-y-1">
             <p className="text-sm font-medium leading-none">{name}</p>
             <p className="text-xs leading-none text-muted-foreground capitalize">
-              {role}
+              {role.toLowerCase()}
             </p>
           </div>
         </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        
+        <DropdownMenuItem>
+          <User className="mr-2 h-4 w-4" />
+          Profile
+        </DropdownMenuItem>
         
         <DropdownMenuSeparator />
         
-        <DropdownMenuGroup>
-          <DropdownMenuItem>
-            <User className="mr-2 h-4 w-4" />
-            <span>Profile</span>
-          </DropdownMenuItem>
-          <DropdownMenuItem>
-            <Settings className="mr-2 h-4 w-4" />
-            <span>Settings</span>
-          </DropdownMenuItem>
-        </DropdownMenuGroup>
-        
-        <DropdownMenuSeparator />
-
-        <DropdownMenuSeparator />
-        
-        <DropdownMenuItem asChild>
-          {/* Using asChild allows your LogoutButton to take over styling */}
-          <div className="w-full cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-950/20">
-             <LogoutButton />
-          </div>
+        <DropdownMenuItem 
+          className="text-red-600 focus:text-red-600 cursor-pointer"
+          onClick={handleLogout}
+        >
+          <LogOut className="mr-2 h-4 w-4" />
+          <LogoutButton />
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

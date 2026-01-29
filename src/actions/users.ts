@@ -20,7 +20,15 @@ export async function createUser(formData: FormData) {
   const name = String(formData.get("name") ?? "").trim();
   const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "");
-  const role = formData.get("role") === "ADMIN" ? "ADMIN" : formData.get("role") === "HR" ? "HR" : "STAFF";
+  const role =
+    formData.get("role") === "ADMIN"
+      ? "ADMIN"
+      : formData.get("role") === "HR"
+        ? "HR"
+        : "STAFF";
+
+  const rawImage = formData.get("image")?.toString();
+  const image = rawImage && rawImage.trim() !== "" ? rawImage : null;
 
   if (!name || !email || !password) {
     throw new Error("Missing required fields");
@@ -34,6 +42,7 @@ export async function createUser(formData: FormData) {
     passwordHash,
     role,
     isActive: true,
+    image,
   });
 
   revalidatePath("/dashboard/users");
@@ -48,12 +57,17 @@ export async function updateUserProfile(userId: string, formData: FormData) {
   // const role = String(formData.get("role"));
   const role = formData.get("role") as "ADMIN" | "HR" | "STAFF";
   const email = String(formData.get("email") || "").trim();
+  const rawImage = formData.get("image")?.toString();
+  const image = rawImage && rawImage.trim() !== "" ? rawImage : null;
 
   if (!name) {
     throw new Error("Name is required");
   }
 
-  await db.update(users).set({ name, role, email }).where(eq(users.id, userId));
+  await db
+    .update(users)
+    .set({ name, role, email, image })
+    .where(eq(users.id, userId));
 
   revalidatePath("/dashboard/users");
   revalidatePath(`/dashboard/users/${userId}/edit`);
@@ -107,7 +121,9 @@ export async function resetUserPassword(userId: string, formData: FormData) {
 //     return { success: false, error: "Failed to delete" };
 //   }
 // }
-export async function deleteUser(userId: string): Promise<{ success: boolean; error?: string }> {
+export async function deleteUser(
+  userId: string,
+): Promise<{ success: boolean; error?: string }> {
   try {
     const currentUser = await getCurrentUser();
 
@@ -127,10 +143,9 @@ export async function deleteUser(userId: string): Promise<{ success: boolean; er
 
     // 3. Database Operation
     await db.delete(users).where(eq(users.id, userId));
-    
+
     revalidatePath("/dashboard/users");
     return { success: true };
-
   } catch (error) {
     console.error("Delete user error:", error);
     return { success: false, error: "Failed to delete user" };

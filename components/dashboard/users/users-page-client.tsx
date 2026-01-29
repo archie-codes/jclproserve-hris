@@ -49,6 +49,7 @@ import {
   UserCog,
   KeyRound,
 } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
 
 import { CreateUserModal } from "@/components/dashboard/modals/create-user-modal";
@@ -61,6 +62,7 @@ type User = {
   email: string;
   role: string;
   isActive: boolean;
+  image: string | null;
 };
 
 type CurrentUser = {
@@ -107,11 +109,15 @@ export default function UsersPageClient({ users, currentUser }: Props) {
 
       // 2. Check the result object
       if (result.success) {
-        toast.success("User access delete successfully", { position: "top-center" });
+        toast.success("User access delete successfully", {
+          position: "top-center",
+        });
         setDeleteDialogOpen(false);
       } else {
         // 3. Display the SPECIFIC error from the server (e.g., "You cannot delete your own account")
-        toast.error(result.error || "Failed to delete user", { position: "top-center" });
+        toast.error(result.error || "Failed to delete user", {
+          position: "top-center",
+        });
       }
     } catch (error) {
       // This catch block will now only trigger on network failures, not validation logic
@@ -207,9 +213,21 @@ export default function UsersPageClient({ users, currentUser }: Props) {
                   >
                     <TableCell>
                       <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 dark:bg-primary/20 text-sm font-bold text-primary ring-2 ring-background">
-                          {user.name.charAt(0).toUpperCase()}
-                        </div>
+                        <Avatar className="h-10 w-10 border border-muted/50">
+                          {/* 1. Show Image if it exists */}
+                          {user.image ? (
+                            <AvatarImage
+                              src={user.image}
+                              alt={user.name}
+                              className="object-cover"
+                            />
+                          ) : null}
+
+                          {/* 2. Show Initials if no image (Fallback) */}
+                          <AvatarFallback className="bg-primary/10 dark:bg-primary/20 text-primary font-bold">
+                            {user.name.charAt(0).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
                         <div className="flex flex-col">
                           <span className="font-medium text-sm text-foreground">
                             {user.name}
