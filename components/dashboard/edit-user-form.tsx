@@ -149,6 +149,7 @@ export function EditUserForm({
                   <SelectItem value="ADMIN">ADMIN</SelectItem>
                   <SelectItem value="HR">HR</SelectItem>
                   <SelectItem value="STAFF">STAFF</SelectItem>
+                  <SelectItem value="COORDINATOR">COORDINATOR</SelectItem>
                 </SelectContent>
               </Select>
             </div>

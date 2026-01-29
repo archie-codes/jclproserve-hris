@@ -39,6 +39,10 @@ const createEmployeeSchema = z.object({
   
   emergencyContactName: z.string().optional(),
   emergencyContactPhone: z.string().optional(),
+
+  basicSalary: z.coerce.number().min(1, "Basic salary is required"),
+  salaryType: z.enum(["DAILY", "MONTHLY"]),
+  allowance: z.coerce.number().optional().default(0), 
 });
 
 type UpdateEmployeeData = {
@@ -69,6 +73,10 @@ type UpdateEmployeeData = {
   mobileNumber?: string;
   emergencyContactName?: string;
   emergencyContactPhone?: string;
+  
+  basicSalary: number;
+  salaryType: string;
+  allowance?: number;
 };
 
 type EmployeeInput = z.infer<typeof createEmployeeSchema>;
@@ -134,6 +142,10 @@ export async function createEmployee(rawData: EmployeeInput) {
         
         emergencyContactName: sanitize(data.emergencyContactName),
         emergencyContactPhone: sanitize(data.emergencyContactPhone),
+
+        basicSalary: Math.round(data.basicSalary * 100), 
+        salaryType: data.salaryType,
+        allowance: Math.round((data.allowance || 0) * 100),
       })
       .returning({ id: employees.id, name: employees.firstName });
 
@@ -231,6 +243,7 @@ export async function getNextEmployeeId() {
   }
 }
 
+
 // =========================
 // UPDATE EMPLOYEE
 // =========================
@@ -269,6 +282,10 @@ export async function updateEmployee(id: string, data: UpdateEmployeeData) {
         mobileNumber: data.mobileNumber || null,
         emergencyContactName: data.emergencyContactName || null,
         emergencyContactPhone: data.emergencyContactPhone || null,
+
+        basicSalary: Math.round(data.basicSalary * 100), 
+        salaryType: data.salaryType,
+        allowance: Math.round((data.allowance || 0) * 100),
       })
       .where(eq(employees.id, id));
 

@@ -25,7 +25,9 @@ export async function createUser(formData: FormData) {
       ? "ADMIN"
       : formData.get("role") === "HR"
         ? "HR"
-        : "STAFF";
+        : formData.get("role") === "COORDINATOR"
+          ? "COORDINATOR"
+          : "STAFF";
 
   const rawImage = formData.get("image")?.toString();
   const image = rawImage && rawImage.trim() !== "" ? rawImage : null;
@@ -55,7 +57,7 @@ export async function createUser(formData: FormData) {
 export async function updateUserProfile(userId: string, formData: FormData) {
   const name = String(formData.get("name") || "").trim();
   // const role = String(formData.get("role"));
-  const role = formData.get("role") as "ADMIN" | "HR" | "STAFF";
+  const role = formData.get("role") as "ADMIN" | "HR" | "STAFF" | "COORDINATOR";
   const email = String(formData.get("email") || "").trim();
   const rawImage = formData.get("image")?.toString();
   const image = rawImage && rawImage.trim() !== "" ? rawImage : null;

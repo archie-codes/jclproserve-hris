@@ -5,7 +5,8 @@ import { eq } from "drizzle-orm";
 import { format, differenceInYears } from "date-fns";
 import { 
   User, Briefcase, Building2, Phone, CalendarDays, ShieldCheck, 
-  ChevronLeft, CreditCard, Mail, MapPin, Printer, Edit, Download
+  ChevronLeft, CreditCard, Mail, MapPin, Printer, Edit, Download,
+  Wallet, Banknote
 } from "lucide-react";
 import Link from "next/link";
 
@@ -15,8 +16,10 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"; // 👈 Ensure AvatarImage is imported
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { PrintButton } from "@/components/dashboard/employees/print-button";
+import { EditProfileButton } from "@/components/dashboard/employees/edit-profile-button";
 
 interface PageProps {
   params: Promise<{ employeeId: string }>;
@@ -25,7 +28,7 @@ interface PageProps {
 export default async function EmployeeProfilePage({ params }: PageProps) {
   const { employeeId } = await params;
 
-  // 1. Fetch Employee (imageUrl will now be included automatically)
+  // 1. Fetch Employee
   const employee = await db.query.employees.findFirst({
     where: eq(employees.id, employeeId),
   });
@@ -41,6 +44,15 @@ export default async function EmployeeProfilePage({ params }: PageProps) {
   const calculateAge = (dob: string | Date | null) => 
     dob ? `${differenceInYears(new Date(), new Date(dob))} yrs old` : "N/A";
 
+  // 👇 NEW: Currency Formatter (Converts Cents -> Peso)
+  const formatCurrency = (amountInCents: number | null) => {
+    if (amountInCents === null || amountInCents === undefined) return "₱ 0.00";
+    return new Intl.NumberFormat("en-PH", {
+      style: "currency",
+      currency: "PHP",
+    }).format(amountInCents / 100);
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "REGULAR": 
@@ -55,7 +67,7 @@ export default async function EmployeeProfilePage({ params }: PageProps) {
   };
 
   return (
-    <div className="min-h-screen bg-muted/40 p-4 md:p-6 space-y-6 md:space-y-8">
+    <div className="min-h-screen bg-muted/40 p-4 md:p-6 space-y-6 md:space-y-8 animate-in fade-in duration-500">
       
       {/* --- TOP NAV --- */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -66,12 +78,8 @@ export default async function EmployeeProfilePage({ params }: PageProps) {
             </Link>
         </Button>
         <div className="flex gap-2 w-full sm:w-auto">
-          <Button variant="outline" size="sm" className="flex-1 sm:flex-none">
-            <Printer className="mr-2 h-4 w-4" /> Print
-          </Button>
-          <Button size="sm" className="flex-1 sm:flex-none">
-            <Edit className="mr-2 h-4 w-4" /> Edit
-          </Button>
+          <PrintButton data={employee} />
+          <EditProfileButton employee={employee} />
         </div>
       </div>
 
@@ -83,22 +91,18 @@ export default async function EmployeeProfilePage({ params }: PageProps) {
             <div className="bg-linear-to-b from-primary/10 to-transparent dark:from-primary/5 h-24" />
             <CardContent className="relative pt-0 pb-8 text-center">
               
-              {/* 👇 UPDATED AVATAR SECTION */}
               <div className="-mt-12 mb-4 flex justify-center">
                 <Avatar className="h-24 w-24 border-4 border-background shadow-md bg-white">
-                  {/* 1. Show Image if it exists */}
                   <AvatarImage 
                     src={employee.imageUrl || ""} 
-                    alt="Employee Photo" 
+                    alt="Profile" 
                     className="object-cover"
                   />
-                  {/* 2. Fallback to Initials if no image */}
                   <AvatarFallback className="text-2xl font-bold bg-primary text-primary-foreground">
                     {getInitials(employee.firstName, employee.lastName)}
                   </AvatarFallback>
                 </Avatar>
               </div>
-              {/* 👆 END UPDATED SECTION */}
 
               <h2 className="text-2xl font-bold text-foreground">
                 {employee.firstName} {employee.lastName} {employee.suffix}
@@ -176,6 +180,7 @@ export default async function EmployeeProfilePage({ params }: PageProps) {
               </TabsList>
             </div>
 
+            {/* TAB: PERSONAL */}
             <TabsContent value="personal" className="mt-6 space-y-6">
               <Card className="bg-card">
                 <CardHeader>
@@ -214,6 +219,7 @@ export default async function EmployeeProfilePage({ params }: PageProps) {
               </Card>
             </TabsContent>
 
+            {/* TAB: EMPLOYMENT */}
             <TabsContent value="employment" className="mt-6 space-y-6">
                <Card className="bg-card">
                 <CardHeader>
@@ -222,12 +228,12 @@ export default async function EmployeeProfilePage({ params }: PageProps) {
                 </CardHeader>
                 <CardContent>
                   <dl className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                     <DetailRow label="Employee ID" value={employee.employeeNo} />
-                     <DetailRow label="Date Hired" value={formatDate(employee.dateHired)} />
-                     <DetailRow label="Position" value={employee.position} />
-                     <DetailRow label="Department" value={employee.department} />
-                     <DetailRow label="Employment Status" value={employee.status} />
-                     <DetailRow label="Regularization Date" value={formatDate(employee.dateRegularized)} />
+                      <DetailRow label="Employee ID" value={employee.employeeNo} />
+                      <DetailRow label="Date Hired" value={formatDate(employee.dateHired)} />
+                      <DetailRow label="Position" value={employee.position} />
+                      <DetailRow label="Department" value={employee.department} />
+                      <DetailRow label="Employment Status" value={employee.status} />
+                      <DetailRow label="Regularization Date" value={formatDate(employee.dateRegularized)} />
                   </dl>
                 </CardContent>
               </Card>
@@ -248,10 +254,56 @@ export default async function EmployeeProfilePage({ params }: PageProps) {
               </Card>
             </TabsContent>
 
-            <TabsContent value="financial" className="mt-6">
+            {/* TAB: FINANCIAL (UPDATED) */}
+            <TabsContent value="financial" className="mt-6 space-y-6">
+              
+              {/* 1. Compensation Section */}
+              <Card className="bg-card border-l-4 border-l-emerald-500">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Banknote className="h-5 w-5 text-emerald-600" /> 
+                    Compensation & Benefits
+                  </CardTitle>
+                  <CardDescription>Current salary structure.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <dl className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                    <div className="p-4 bg-emerald-50/50 dark:bg-emerald-900/10 rounded-lg border border-emerald-100 dark:border-emerald-800/30">
+                        <dt className="text-xs font-semibold uppercase text-emerald-600 mb-1">Basic Salary</dt>
+                        <dd className="text-xl font-bold text-foreground font-mono">
+                            {formatCurrency(employee.basicSalary)}
+                        </dd>
+                        <span className="text-[10px] text-muted-foreground uppercase bg-background px-1 rounded border ml-1">
+                            {employee.salaryType || "DAILY"}
+                        </span>
+                    </div>
+
+                    <div className="p-4 bg-blue-50/50 dark:bg-blue-900/10 rounded-lg border border-blue-100 dark:border-blue-800/30">
+                        <dt className="text-xs font-semibold uppercase text-blue-600 mb-1">Allowance (Non-Tax)</dt>
+                        <dd className="text-xl font-bold text-foreground font-mono">
+                            {formatCurrency(employee.allowance)}
+                        </dd>
+                    </div>
+
+                    <div className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border">
+                        <dt className="text-xs font-semibold uppercase text-muted-foreground mb-1">Rate Basis</dt>
+                        <dd className="text-sm font-medium text-foreground">
+                            {employee.salaryType === "MONTHLY" 
+                                ? "Fixed Monthly Rate" 
+                                : "Daily Rate (No Work No Pay)"}
+                        </dd>
+                    </div>
+                  </dl>
+                </CardContent>
+              </Card>
+
+              {/* 2. Banking Section */}
               <Card className="bg-card">
                 <CardHeader>
-                  <CardTitle>Payroll & Banking</CardTitle>
+                  <CardTitle className="flex items-center gap-2">
+                    <Wallet className="h-5 w-5 text-muted-foreground" /> 
+                    Banking Details
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <dl className="grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -262,6 +314,7 @@ export default async function EmployeeProfilePage({ params }: PageProps) {
               </Card>
             </TabsContent>
             
+            {/* TAB: DOCUMENTS */}
              <TabsContent value="documents" className="mt-6">
               <Card className="border-dashed bg-muted/20">
                 <CardContent className="flex flex-col items-center justify-center py-10 text-center">
@@ -284,6 +337,8 @@ export default async function EmployeeProfilePage({ params }: PageProps) {
   );
 }
 
+// --- SUB-COMPONENTS ---
+
 function TabTrigger({ value, children }: { value: string, children: React.ReactNode }) {
   return (
     <TabsTrigger 
@@ -297,6 +352,7 @@ function TabTrigger({ value, children }: { value: string, children: React.ReactN
         text-muted-foreground 
         data-[state=active]:text-foreground
         whitespace-nowrap
+        transition-all
       "
     >
       {children}

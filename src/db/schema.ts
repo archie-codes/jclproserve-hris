@@ -1,151 +1,3 @@
-// import {
-//   pgTable,
-//   serial,
-//   varchar,
-//   text,
-//   date,
-//   timestamp,
-//   integer,
-//   boolean,
-//   uuid,
-//   pgEnum,
-//   jsonb,
-//   index,
-// } from "drizzle-orm/pg-core";
-
-// export const userRoleEnum = pgEnum("user_role", ["ADMIN", "HR", "STAFF"]);
-// export const employeeStatusEnum = pgEnum("employee_status", [
-//   "ACTIVE",
-//   "INACTIVE",
-//   "TERMINATED",
-//   "RESIGNED",
-// ]);
-// export const auditActionEnum = pgEnum("audit_action", [
-//   "CREATE_USER",
-//   "UPDATE_USER",
-//   "DELETE_USER",
-//   "RESET_PASSWORD",
-//   "LOGIN",
-//   "LOGOUT",
-// ]);
-
-// /* ================= AUDIT LOGS ================= */
-
-// export const auditLogs = pgTable("audit_logs", {
-//   id: uuid("id").defaultRandom().primaryKey(),
-//   actorId: uuid("actor_id").notNull(),
-//   action: auditActionEnum("action").notNull(),
-//   targetId: uuid("target_id"),
-//   metadata: jsonb("metadata"),
-//   createdAt: timestamp("created_at").defaultNow(),
-// });
-
-// /* ================= USERS ================= */
-
-// export const users = pgTable("users", {
-//   id: uuid("id").defaultRandom().primaryKey(),
-//   email: varchar("email", { length: 255 }).notNull().unique(),
-//   passwordHash: varchar("password_hash", { length: 255 }).notNull(),
-//   name: varchar("name", { length: 255 }).notNull(),
-//   // role: varchar("role", { length: 50 }).default("admin"), // admin, hr, staff
-//   role: userRoleEnum("role").default("ADMIN").notNull(),
-//   isActive: boolean("is_active").default(true),
-//   createdAt: timestamp("created_at").defaultNow(),
-// });
-
-// /* ================= EMPLOYEES ================= */
-
-// export const employees = pgTable(
-//   "employees",
-//   {
-//     id: uuid("id").defaultRandom().primaryKey(),
-
-//     // Just define the column here (remove .index())
-//     userId: uuid("user_id").references(() => users.id, {
-//       onDelete: "set null",
-//     }),
-
-//     employeeNo: varchar("employee_no", { length: 20 }).unique().notNull(),
-//     firstName: varchar("first_name", { length: 100 }).notNull(),
-//     middleName: varchar("middle_name", { length: 100 }).notNull(),
-//     lastName: varchar("last_name", { length: 100 }).notNull(),
-//     email: varchar("email", { length: 255 }).unique().notNull(),
-//     position: varchar("position", { length: 100 }),
-//     department: varchar("department", { length: 100 }),
-//     hireDate: date("hire_date").notNull(),
-//     status: employeeStatusEnum("status").default("ACTIVE").notNull(),
-//     createdAt: timestamp("created_at").defaultNow(),
-//   },
-//   (table) => {
-//     return [
-//       // 👇 Define Index Here
-//       index("employee_user_idx").on(table.userId),
-//     ];
-//   },
-// );
-
-// /* ================= ATTENDANCE ================= */
-
-// // export const attendance = pgTable("attendance", {
-// //   id: uuid("id").defaultRandom().primaryKey(),
-
-// //   employeeId: uuid("employee_id")
-// //     .references(() => employees.id, { onDelete: "cascade" })
-// //     .notNull(),
-
-// //   date: date("date").notNull(),
-// //   timeIn: timestamp("time_in"),
-// //   timeOut: timestamp("time_out"),
-
-// //   createdAt: timestamp("created_at").defaultNow(),
-// // });
-// export const attendance = pgTable(
-//   "attendance",
-//   {
-//     id: uuid("id").defaultRandom().primaryKey(),
-
-//     employeeId: uuid("employee_id")
-//       .references(() => employees.id, { onDelete: "cascade" })
-//       .notNull(),
-
-//     date: date("date").notNull(),
-//     timeIn: timestamp("time_in"),
-//     timeOut: timestamp("time_out"),
-//     createdAt: timestamp("created_at").defaultNow(),
-//   },
-//   (table) => {
-//     return [
-//       // 👇 Define Index Here
-//       index("attendance_employee_idx").on(table.employeeId),
-//     ];
-//   },
-// );
-
-// /* ================= LEAVES ================= */
-
-// export const leaves = pgTable(
-//   "leaves",
-//   {
-//     id: uuid("id").defaultRandom().primaryKey(),
-
-//     employeeId: uuid("employee_id")
-//       .references(() => employees.id, { onDelete: "cascade" })
-//       .notNull(),
-
-//     type: varchar("type", { length: 50 }).notNull(),
-//     startDate: date("start_date").notNull(),
-//     endDate: date("end_date").notNull(),
-//     reason: text("reason"),
-//     createdAt: timestamp("created_at").defaultNow(),
-//   },
-//   (table) => {
-//     return [
-//       // 👇 Define Index Here
-//       index("leaves_employee_idx").on(table.employeeId),
-//     ];
-//   },
-// );
-
 import {
   pgTable,
   varchar,
@@ -157,12 +9,18 @@ import {
   pgEnum,
   jsonb,
   index,
+  integer
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
 /* ================= ENUMS ================= */
 
-export const userRoleEnum = pgEnum("user_role", ["ADMIN", "HR", "STAFF"]);
+export const userRoleEnum = pgEnum("user_role", [
+  "ADMIN",
+  "HR",
+  "STAFF",
+  "COORDINATOR",
+]);
 
 // Updated for PH Labor Standards
 export const employeeStatusEnum = pgEnum("employee_status", [
@@ -240,7 +98,7 @@ export const employees = pgTable(
     middleName: varchar("middle_name", { length: 100 }), // Made optional as not everyone has one
     lastName: varchar("last_name", { length: 100 }).notNull(),
     suffix: varchar("suffix", { length: 20 }),
-    
+
     dateOfBirth: date("date_of_birth"),
     gender: genderEnum("gender"),
     civilStatus: civilStatusEnum("civil_status").default("SINGLE"),
@@ -252,7 +110,7 @@ export const employees = pgTable(
     personalEmail: varchar("personal_email", { length: 255 }),
     mobileNumber: varchar("mobile_number", { length: 20 }),
     address: text("address"), // Full address
-    
+
     emergencyContactName: varchar("emergency_contact_name", { length: 100 }),
     emergencyContactPhone: varchar("emergency_contact_phone", { length: 20 }),
     emergencyRelation: varchar("emergency_relation", { length: 50 }),
@@ -261,7 +119,7 @@ export const employees = pgTable(
     position: varchar("position", { length: 100 }),
     department: varchar("department", { length: 100 }),
     status: employeeStatusEnum("status").default("PROBATIONARY").notNull(),
-    
+
     dateHired: date("date_hired").notNull(), // Renamed from hireDate to standard
     dateRegularized: date("date_regularized"), // +6 months usually
     dateResigned: date("date_resigned"), // For clearance
@@ -278,13 +136,18 @@ export const employees = pgTable(
 
     createdAt: timestamp("created_at").defaultNow(),
     updatedAt: timestamp("updated_at").defaultNow(),
+
+    // --- G. COMPENSATION (New Section) ---
+    basicSalary: integer("basic_salary").default(0), // Store in cents/centavos to avoid rounding errors (e.g., 500.00 -> 50000)
+    salaryType: varchar("salary_type", { length: 20 }).default("DAILY"), // DAILY or MONTHLY
+    allowance: integer("allowance").default(0), // Non-taxable allowance
   },
   (table) => {
     return [
       index("employee_user_idx").on(table.userId),
       index("employee_status_idx").on(table.status),
     ];
-  }
+  },
 );
 
 /* ================= DOCUMENTS (New) ================= */
@@ -296,18 +159,16 @@ export const employeeDocuments = pgTable(
     employeeId: uuid("employee_id")
       .references(() => employees.id, { onDelete: "cascade" })
       .notNull(),
-    
+
     fileName: varchar("file_name", { length: 255 }).notNull(),
     fileUrl: text("file_url").notNull(), // S3 or UploadThing URL
     documentType: varchar("document_type", { length: 50 }), // CONTRACT, RESUME, MEMO
-    
+
     uploadedAt: timestamp("uploaded_at").defaultNow(),
   },
   (table) => {
-    return [
-      index("documents_employee_idx").on(table.employeeId),
-    ];
-  }
+    return [index("documents_employee_idx").on(table.employeeId)];
+  },
 );
 
 /* ================= ATTENDANCE ================= */
@@ -325,10 +186,8 @@ export const attendance = pgTable(
     createdAt: timestamp("created_at").defaultNow(),
   },
   (table) => {
-    return [
-      index("attendance_employee_idx").on(table.employeeId),
-    ];
-  }
+    return [index("attendance_employee_idx").on(table.employeeId)];
+  },
 );
 
 /* ================= LEAVES ================= */
@@ -348,10 +207,8 @@ export const leaves = pgTable(
     createdAt: timestamp("created_at").defaultNow(),
   },
   (table) => {
-    return [
-      index("leaves_employee_idx").on(table.employeeId),
-    ];
-  }
+    return [index("leaves_employee_idx").on(table.employeeId)];
+  },
 );
 
 /* ================= RELATIONS (For Drizzle Queries) ================= */

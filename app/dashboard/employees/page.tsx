@@ -10,9 +10,5 @@ export default async function EmployeesPage() {
   });
 
   // 2. Pass data to the client component
-  return (
-    <div className="p-6">
-      <EmployeesClient data={employeesList} />
-    </div>
-  );
+  return <EmployeesClient data={employeesList} />;
 }
