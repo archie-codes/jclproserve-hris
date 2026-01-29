@@ -29,7 +29,7 @@ export default function ReportsPage() {
     const res = await getExportData();
     
     if (!res.success || !res.data) {
-      toast.error(res.error || "Export failed", { id: toastId });
+      toast.error(res.error || "Export failed", { id: toastId, position: "top-center", });
       return;
     }
 
@@ -39,7 +39,7 @@ export default function ReportsPage() {
     
     // Generate file
     XLSX.writeFile(workbook, `JCL_Employee_List_${new Date().getFullYear()}.xlsx`);
-    toast.success("Excel downloaded successfully", { id: toastId });
+    toast.success("Excel downloaded successfully", { id: toastId, position: "top-center", });
   };
 
   // --- PDF EXPORT LOGIC ---
@@ -48,7 +48,7 @@ export default function ReportsPage() {
     const res = await getExportData();
 
     if (!res.success || !res.data) {
-      toast.error(res.error || "Export failed", { id: toastId });
+      toast.error(res.error || "Export failed", { id: toastId, position: "top-center", });
       return;
     }
 
@@ -75,7 +75,7 @@ export default function ReportsPage() {
     });
 
     doc.save(`JCL_Census_${new Date().getTime()}.pdf`);
-    toast.success("PDF downloaded successfully", { id: toastId });
+    toast.success("PDF downloaded successfully", { id: toastId, position: "top-center", });
   };
 
   return (
