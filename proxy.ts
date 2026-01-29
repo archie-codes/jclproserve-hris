@@ -53,46 +53,65 @@ import { eq } from "drizzle-orm";
 
 
 export async function proxy(req: NextRequest) { // Renamed from proxy to middleware
-  const sessionCookie = (await cookies()).get("session")?.value;
+  // const sessionCookie = (await cookies()).get("session")?.value;
+  // const { pathname } = req.nextUrl;
+
+  // // 1. If user is logged in and tries to access the login page (root "/")
+  // // Redirect them to dashboard
+  // if (sessionCookie && pathname === "/") {
+  //   return NextResponse.redirect(new URL("/dashboard", req.url));
+  // }
+
+  // // 2. If user is NOT logged in and tries to access dashboard
+  // if (!sessionCookie && pathname.startsWith("/dashboard")) {
+  //   return NextResponse.redirect(new URL("/", req.url));
+  // }
+
+  // // 3. Session Validation (The rest of your existing logic)
+  // if (sessionCookie) {
+  //   try {
+  //     const sessionData = JSON.parse(sessionCookie);
+      
+  //     // OPTIONAL: Performance Check
+  //     // Querying DB in middleware on every request can be slow. 
+  //     // Consider using JWT or only querying for Admin Routes.
+      
+  //     if (pathname.startsWith("/dashboard")) {
+  //         const user = await db.query.users.findFirst({
+  //           where: eq(users.id, sessionData.id),
+  //           columns: { role: true },
+  //         });
+
+  //         const adminRoutes = ["/dashboard/users", "/dashboard/settings"];
+  //         const isAdminRoute = adminRoutes.some((route) => pathname.startsWith(route));
+
+  //         if (isAdminRoute && user?.role !== "ADMIN") {
+  //           return NextResponse.redirect(new URL("/dashboard", req.url));
+  //         }
+  //     }
+  //   } catch (e) {
+  //     return NextResponse.redirect(new URL("/", req.url));
+  //   }
+  // }
+
+  // return NextResponse.next();
+const session = req.cookies.get("session")?.value;
   const { pathname } = req.nextUrl;
 
-  // 1. If user is logged in and tries to access the login page (root "/")
-  // Redirect them to dashboard
-  if (sessionCookie && pathname === "/") {
+  // 1. If user is logged in and tries to go to /login, send them to dashboard
+  if (session && pathname.startsWith("/login")) {
     return NextResponse.redirect(new URL("/dashboard", req.url));
   }
 
-  // 2. If user is NOT logged in and tries to access dashboard
-  if (!sessionCookie && pathname.startsWith("/dashboard")) {
-    return NextResponse.redirect(new URL("/", req.url));
-  }
-
-  // 3. Session Validation (The rest of your existing logic)
-  if (sessionCookie) {
-    try {
-      const sessionData = JSON.parse(sessionCookie);
-      
-      // OPTIONAL: Performance Check
-      // Querying DB in middleware on every request can be slow. 
-      // Consider using JWT or only querying for Admin Routes.
-      
-      if (pathname.startsWith("/dashboard")) {
-          const user = await db.query.users.findFirst({
-            where: eq(users.id, sessionData.id),
-            columns: { role: true },
-          });
-
-          const adminRoutes = ["/dashboard/users", "/dashboard/settings"];
-          const isAdminRoute = adminRoutes.some((route) => pathname.startsWith(route));
-
-          if (isAdminRoute && user?.role !== "ADMIN") {
-            return NextResponse.redirect(new URL("/dashboard", req.url));
-          }
-      }
-    } catch (e) {
-      return NextResponse.redirect(new URL("/", req.url));
-    }
+  // 2. If user is NOT logged in and tries to go to /dashboard, send them to /login
+  if (!session && pathname.startsWith("/dashboard")) {
+    return NextResponse.redirect(new URL("/login", req.url));
   }
 
   return NextResponse.next();
+}
+
+export const config = {
+  // Monitor everything except static files and APIs
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
 }

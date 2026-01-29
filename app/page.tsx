@@ -1,13 +1,14 @@
-"use client"
+import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 
-import { LoginForm } from "@/components/login-form"
+export default async function RootPage() {
+  const session = (await cookies()).get("session")?.value;
 
-export default function LoginPage() {
-  return (
-    <div className="bg-muted flex min-h-svh flex-col items-center justify-center p-6 md:p-10">
-      <div className="w-full max-w-sm md:max-w-4xl">
-        <LoginForm />
-      </div>
-    </div>
-  )
+  // If already logged in, go to dashboard
+  if (session) {
+    redirect("/dashboard");
+  }
+
+  // Otherwise, go to the new login page
+  redirect("/login");
 }
