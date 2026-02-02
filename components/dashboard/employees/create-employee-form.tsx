@@ -943,7 +943,6 @@
 //   );
 // }
 
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -991,8 +990,13 @@ const formSchema = z.object({
 
   // Contact
   email: z.string().email("Invalid email address"),
-  mobileNumber: z.string().min(11, "Mobile number must be 11 digits (09...)"),
-  address: z.string().optional(),
+  mobileNumber: z
+    .string()
+    .min(11, "Mobile number must be 11 digits (09...)")
+    .max(11, "Mobile number must be 11 digits (09...)")
+    .regex(/^09\d{9}$/, "Must be a valid PH number (starts with 09)"),
+  // Replace: address: z.string().optional(),
+  address: z.string().min(1, "Address is required"),
 
   // Work
   employeeNo: z.string().min(1, "Employee ID is required"),
@@ -1012,8 +1016,13 @@ const formSchema = z.object({
   bankAccountNo: z.string().optional(),
 
   // Emergency
-  emergencyContactName: z.string().optional(),
-  emergencyContactPhone: z.string().optional(),
+  // Find this in your formSchema definition
+  emergencyContactName: z.string().min(1, "Emergency contact name is required"),
+  emergencyContactPhone: z
+    .string()
+    .min(11, "Mobile number must be 11 digits (09...)")
+    .max(11, "Mobile number must be 11 digits (09...)")
+    .regex(/^09\d{9}$/, "Must be a valid PH number (starts with 09)"),
 
   // --- NEW COMPENSATION FIELDS ---
   // We use z.coerce.number() and remove .optional() to ensure strict number types
@@ -1111,7 +1120,7 @@ export function CreateEmployeeForm({
   // Input Formatters
   const handleFormat = (
     e: React.ChangeEvent<HTMLInputElement>,
-    type: "SSS" | "PHILHEALTH" | "PAGIBIG" | "TIN" | "MOBILE"
+    type: "SSS" | "PHILHEALTH" | "PAGIBIG" | "TIN" | "MOBILE",
   ) => {
     let val = e.target.value.replace(/\D/g, "");
     let formatted = "";
@@ -1154,12 +1163,16 @@ export function CreateEmployeeForm({
       // @ts-ignore - Ignoring strict type check for now to allow submission
       const result = await createEmployee(values);
       if (result.success) {
-        toast.success("Employee record created successfully", { position: "top-center" });
+        toast.success("Employee record created successfully", {
+          position: "top-center",
+        });
         form.reset();
         setActiveTab("personal");
         onSuccess();
       } else {
-        toast.error(result.error || "Failed to create employee", { position: "top-center" });
+        toast.error(result.error || "Failed to create employee", {
+          position: "top-center",
+        });
       }
     } catch (error) {
       console.error(error);
@@ -1208,11 +1221,15 @@ export function CreateEmployeeForm({
                           const url = res[0].url;
                           form.setValue("imageUrl", url);
                           setImagePreview(url);
-                          toast.success("Profile picture updated");
+                          toast.success("Profile picture updated", {
+                            position: "top-center",
+                          });
                         }
                       }}
                       onUploadError={(error: Error) => {
-                        toast.error(`Upload failed: ${error.message}`);
+                        toast.error(`Upload failed: ${error.message}`, {
+                          position: "top-center",
+                        });
                       }}
                       appearance={{
                         button:
@@ -1312,7 +1329,11 @@ export function CreateEmployeeForm({
                     <FormItem>
                       <FormLabel>Date of Birth *</FormLabel>
                       <FormControl>
-                        <Input type="date" {...field} className="block w-full" />
+                        <Input
+                          type="date"
+                          {...field}
+                          className="block w-full"
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -1484,13 +1505,27 @@ export function CreateEmployeeForm({
                           <SelectItem value="ADMIN OIC">ADMIN OIC</SelectItem>
                           <SelectItem value="HR HEAD">HR HEAD</SelectItem>
                           <SelectItem value="HR STAFF">HR STAFF</SelectItem>
-                          <SelectItem value="ACCOUNTING HEAD">ACCOUNTING HEAD</SelectItem>
-                          <SelectItem value="ACCOUNTING STAFF">ACCOUNTING STAFF</SelectItem>
-                          <SelectItem value="PAYROLL HEAD">PAYROLL HEAD</SelectItem>
-                          <SelectItem value="PAYROLL STAFF">PAYROLL STAFF</SelectItem>
-                          <SelectItem value="OPERATIONS MANAGER">OPERATIONS MANAGER</SelectItem>
-                          <SelectItem value="COORDINATOR">COORDINATOR</SelectItem>
-                          <SelectItem value="UTILITY">UTILITY</SelectItem>
+                          <SelectItem value="ACCOUNTING HEAD">
+                            ACCOUNTING HEAD
+                          </SelectItem>
+                          <SelectItem value="ACCOUNTING STAFF">
+                            ACCOUNTING STAFF
+                          </SelectItem>
+                          <SelectItem value="PAYROLL HEAD">
+                            PAYROLL HEAD
+                          </SelectItem>
+                          <SelectItem value="PAYROLL STAFF">
+                            PAYROLL STAFF
+                          </SelectItem>
+                          <SelectItem value="OPERATIONS MANAGER">
+                            OPERATIONS MANAGER
+                          </SelectItem>
+                          <SelectItem value="COORDINATOR">
+                            COORDINATOR
+                          </SelectItem>
+                          <SelectItem value="HOUSEKEEPING UTILITY">
+                            HOUSEKEEPING UTILITY
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -1536,7 +1571,11 @@ export function CreateEmployeeForm({
                     <FormItem>
                       <FormLabel>Date Hired *</FormLabel>
                       <FormControl>
-                        <Input type="date" {...field} className="block w-full" />
+                        <Input
+                          type="date"
+                          {...field}
+                          className="block w-full"
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -1573,7 +1612,9 @@ export function CreateEmployeeForm({
                         </FormControl>
                         <SelectContent>
                           <SelectItem value="DAILY">Daily Rate</SelectItem>
-                          <SelectItem value="MONTHLY">Monthly Salary</SelectItem>
+                          <SelectItem value="MONTHLY">
+                            Monthly Salary
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                     </FormItem>
@@ -1761,10 +1802,16 @@ export function CreateEmployeeForm({
                   name="address"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Address</FormLabel>
+                      <FormLabel>
+                        Full Address <span className="text-red-500">*</span>
+                      </FormLabel>
                       <FormControl>
-                        <Input {...field} />
+                        <Input
+                          {...field}
+                          placeholder="House No., Street, Brgy, City, Province"
+                        />
                       </FormControl>
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
@@ -1800,10 +1847,14 @@ export function CreateEmployeeForm({
                   name="emergencyContactName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Emergency Contact Name</FormLabel>
+                      <FormLabel>
+                        Emergency Contact Name{" "}
+                        <span className="text-red-500">*</span>
+                      </FormLabel>
                       <FormControl>
-                        <Input {...field} />
+                        <Input {...field} placeholder="Full Name" />
                       </FormControl>
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
@@ -1816,8 +1867,25 @@ export function CreateEmployeeForm({
                     <FormItem>
                       <FormLabel>Emergency Contact Phone</FormLabel>
                       <FormControl>
-                        <Input {...field} />
+                        <Input
+                          {...field}
+                          placeholder="09xxxxxxxxx"
+                          type="tel"
+                          maxLength={11} // HTML limit
+                          inputMode="numeric" // Shows number pad on mobile
+                          // Intercept the change event
+                          onChange={(e) => {
+                            // 1. Remove any non-numeric characters (letters, symbols)
+                            const value = e.target.value.replace(/\D/g, "");
+
+                            // 2. Only update if length is <= 11
+                            if (value.length <= 11) {
+                              field.onChange(value);
+                            }
+                          }}
+                        />
                       </FormControl>
+                      <FormMessage />
                     </FormItem>
                   )}
                 />

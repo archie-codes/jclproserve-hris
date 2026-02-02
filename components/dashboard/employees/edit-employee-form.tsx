@@ -792,7 +792,6 @@
 //   );
 // }
 
-
 "use client";
 
 import { useState } from "react";
@@ -850,6 +849,7 @@ const formSchema = z.object({
   position: z.string().min(1, "Position is required"),
   status: z.enum(["PROBATIONARY", "REGULAR", "CONTRACTUAL", "PROJECT_BASED"]),
   dateHired: z.string().min(1, "Hire date is required"),
+  dateRegularized: z.string().optional(),
 
   // Govt IDs
   sssNo: z.string().optional(),
@@ -905,6 +905,7 @@ export function EditEmployeeForm({
       status: employee.status || "PROBATIONARY",
       department: employee.department || undefined,
       position: employee.position || "",
+      dateRegularized: formatDateForInput(employee.dateRegularized),
       dateHired: formatDateForInput(employee.dateHired),
       email: employee.email || "",
 
@@ -927,10 +928,12 @@ export function EditEmployeeForm({
     },
   });
 
+  const selectedStatus = form.watch("status");
+
   // --- INPUT FORMATTERS (Auto-add dashes) ---
   const handleFormat = (
     e: React.ChangeEvent<HTMLInputElement>,
-    type: "SSS" | "PHILHEALTH" | "PAGIBIG" | "TIN" | "MOBILE"
+    type: "SSS" | "PHILHEALTH" | "PAGIBIG" | "TIN" | "MOBILE",
   ) => {
     let val = e.target.value.replace(/\D/g, "");
     let formatted = "";
@@ -975,7 +978,9 @@ export function EditEmployeeForm({
       const result = await updateEmployee(employee.id, data);
 
       if (result.success) {
-        toast.success("Employee record updated successfully", { position: "top-center" });
+        toast.success("Employee record updated successfully", {
+          position: "top-center",
+        });
         onSuccess();
       } else {
         toast.error("Failed to update record", { position: "top-center" });
@@ -1027,11 +1032,15 @@ export function EditEmployeeForm({
                           const url = res[0].url;
                           form.setValue("imageUrl", url);
                           setImagePreview(url);
-                          toast.success("Photo updated");
+                          toast.success("Photo updated", {
+                            position: "top-center",
+                          });
                         }
                       }}
                       onUploadError={(error: Error) => {
-                        toast.error(`Upload failed: ${error.message}`);
+                        toast.error(`Upload failed: ${error.message}`, {
+                          position: "top-center",
+                        });
                       }}
                       appearance={{
                         button:
@@ -1204,7 +1213,7 @@ export function EditEmployeeForm({
                     <FormItem>
                       <FormLabel>Employee ID</FormLabel>
                       <FormControl>
-                        <Input {...field} />
+                        <Input {...field} disabled className="font-mono font-bold" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -1276,13 +1285,25 @@ export function EditEmployeeForm({
                           <SelectItem value="ADMIN OIC">ADMIN OIC</SelectItem>
                           <SelectItem value="HR HEAD">HR HEAD</SelectItem>
                           <SelectItem value="HR STAFF">HR STAFF</SelectItem>
-                          <SelectItem value="ACCOUNTING HEAD">ACCOUNTING HEAD</SelectItem>
-                          <SelectItem value="ACCOUNTING STAFF">ACCOUNTING STAFF</SelectItem>
-                          <SelectItem value="PAYROLL HEAD">PAYROLL HEAD</SelectItem>
-                          <SelectItem value="PAYROLL STAFF">PAYROLL STAFF</SelectItem>
-                          <SelectItem value="OPERATIONS MANAGER">OPERATIONS MANAGER</SelectItem>
-                          <SelectItem value="COORDINATOR">COORDINATOR</SelectItem>
-                          <SelectItem value="UTILITY">UTILITY</SelectItem>
+                          <SelectItem value="ACCOUNTING HEAD">
+                            ACCOUNTING HEAD
+                          </SelectItem>
+                          <SelectItem value="ACCOUNTING STAFF">
+                            ACCOUNTING STAFF
+                          </SelectItem>
+                          <SelectItem value="PAYROLL HEAD">
+                            PAYROLL HEAD
+                          </SelectItem>
+                          <SelectItem value="PAYROLL STAFF">
+                            PAYROLL STAFF
+                          </SelectItem>
+                          <SelectItem value="OPERATIONS MANAGER">
+                            OPERATIONS MANAGER
+                          </SelectItem>
+                          <SelectItem value="COORDINATOR">
+                            COORDINATOR
+                          </SelectItem>
+                          <SelectItem value="HOUSEKEEPING UTILITY">HOUSEKEEPING UTILITY</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -1320,6 +1341,32 @@ export function EditEmployeeForm({
                   )}
                 />
               </div>
+
+              {/* CONDITIONAL FIELD: DATE REGULARIZED */}
+              {/* Only renders if selectedStatus is "REGULAR" */}
+              {selectedStatus === "REGULAR" && (
+                <div className="col-span-12 md:col-span-6">
+                  <FormField
+                    control={form.control}
+                    name="dateRegularized"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Regularization Date</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="date"
+                            {...field}
+                            className="block w-full"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              )}
+
+              {/* DATE HIRED FIELD */}
               <div className="col-span-12 md:col-span-6">
                 <FormField
                   control={form.control}
@@ -1367,7 +1414,9 @@ export function EditEmployeeForm({
                         </FormControl>
                         <SelectContent>
                           <SelectItem value="DAILY">Daily Rate</SelectItem>
-                          <SelectItem value="MONTHLY">Monthly Salary</SelectItem>
+                          <SelectItem value="MONTHLY">
+                            Monthly Salary
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                     </FormItem>

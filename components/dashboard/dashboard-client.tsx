@@ -14,6 +14,7 @@ import {
   Moon,
   Coffee,
   Plane,
+  UserX,
 } from "lucide-react";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { Button } from "@/components/ui/button";
@@ -37,6 +38,7 @@ interface DashboardProps {
   stats: {
     totalEmployees: number;
     activeEmployees: number;
+    resignedEmployees: number; // Added resigned count here
   };
   recentEmployees: {
     id: string;
@@ -126,13 +128,12 @@ export default function DashboardClient({
           trend="Currently active"
           color="green"
         />
-        {/* These two can be hooked up to Leave/Jobs tables later */}
         <StatCard
-          label="Pending Leaves"
-          value="0"
-          icon={Clock}
-          trend="To be reviewed"
-          color="orange"
+          label="Resigned"
+          value={stats.resignedEmployees.toString()}
+          icon={UserX}
+          trend="Inactive / Left"
+          color="red" 
         />
         <StatCard
           label="Open Positions"

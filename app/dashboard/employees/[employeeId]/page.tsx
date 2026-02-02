@@ -2,16 +2,32 @@ import { notFound } from "next/navigation";
 import { db } from "@/src/db";
 import { employees } from "@/src/db/schema";
 import { eq } from "drizzle-orm";
-import { format, differenceInYears } from "date-fns";
-import { 
-  User, Briefcase, Building2, Phone, CalendarDays, ShieldCheck, 
-  ChevronLeft, CreditCard, Mail, MapPin, Printer, Edit, Download,
-  Wallet, Banknote
+import { format, differenceInYears, differenceInMonths } from "date-fns";
+import {
+  User,
+  Briefcase,
+  Building2,
+  Phone,
+  CalendarDays,
+  ShieldCheck,
+  ChevronLeft,
+  CreditCard,
+  Mail,
+  MapPin,
+  Printer,
+  Edit,
+  Download,
+  Wallet,
+  Banknote,
 } from "lucide-react";
 import Link from "next/link";
 
 import {
-  Card, CardContent, CardDescription, CardHeader, CardTitle
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -20,6 +36,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { PrintButton } from "@/components/dashboard/employees/print-button";
 import { EditProfileButton } from "@/components/dashboard/employees/edit-profile-button";
+import { IdCardGenerator } from "@/components/dashboard/id-card-generator";
 
 interface PageProps {
   params: Promise<{ employeeId: string }>;
@@ -36,12 +53,12 @@ export default async function EmployeeProfilePage({ params }: PageProps) {
   if (!employee) return notFound();
 
   // --- HELPERS ---
-  const formatDate = (date: string | Date | null) => 
+  const formatDate = (date: string | Date | null) =>
     date ? format(new Date(date), "MMMM dd, yyyy") : "N/A";
-  
+
   const getInitials = (f: string, l: string) => `${f[0]}${l[0]}`.toUpperCase();
-  
-  const calculateAge = (dob: string | Date | null) => 
+
+  const calculateAge = (dob: string | Date | null) =>
     dob ? `${differenceInYears(new Date(), new Date(dob))} yrs old` : "N/A";
 
   // 👇 NEW: Currency Formatter (Converts Cents -> Peso)
@@ -55,47 +72,49 @@ export default async function EmployeeProfilePage({ params }: PageProps) {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "REGULAR": 
+      case "REGULAR":
         return "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border-green-200 dark:border-green-800";
-      case "PROBATIONARY": 
+      case "PROBATIONARY":
         return "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 border-blue-200 dark:border-blue-800";
-      case "RESIGNED": 
+      case "RESIGNED":
         return "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 border-red-200 dark:border-red-800";
-      default: 
+      default:
         return "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300";
     }
   };
 
   return (
     <div className="min-h-screen bg-muted/40 p-4 md:p-6 space-y-6 md:space-y-8 animate-in fade-in duration-500">
-      
       {/* --- TOP NAV --- */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <Button variant="ghost" asChild className="-ml-2 text-muted-foreground hover:text-foreground w-fit">
-            <Link href="/dashboard/employees">
-                <ChevronLeft className="mr-2 h-4 w-4" />
-                Back to Employees
-            </Link>
+        <Button
+          variant="ghost"
+          asChild
+          className="-ml-2 text-muted-foreground hover:text-foreground w-fit"
+        >
+          <Link href="/dashboard/employees">
+            <ChevronLeft className="mr-2 h-4 w-4" />
+            Back to Employees
+          </Link>
         </Button>
         <div className="flex gap-2 w-full sm:w-auto">
+          <IdCardGenerator employee={employee} />
           <PrintButton data={employee} />
           <EditProfileButton employee={employee} />
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        
         {/* --- LEFT SIDEBAR: ID CARD --- */}
         <div className="lg:col-span-4 space-y-6">
           <Card className="overflow-hidden border-t-4 border-t-primary shadow-sm bg-card">
             <div className="bg-linear-to-b from-primary/10 to-transparent dark:from-primary/5 h-24" />
             <CardContent className="relative pt-0 pb-8 text-center">
-              
               <div className="-mt-12 mb-4 flex justify-center">
                 <Avatar className="h-24 w-24 border-4 border-background shadow-md bg-white">
-                  <AvatarImage 
-                    src={employee.imageUrl || ""} 
-                    alt="Profile" 
+                  <AvatarImage
+                    src={employee.imageUrl || ""}
+                    alt="Profile"
                     className="object-cover"
                   />
                   <AvatarFallback className="text-2xl font-bold bg-primary text-primary-foreground">
@@ -107,10 +126,15 @@ export default async function EmployeeProfilePage({ params }: PageProps) {
               <h2 className="text-2xl font-bold text-foreground">
                 {employee.firstName} {employee.lastName} {employee.suffix}
               </h2>
-              <p className="text-muted-foreground font-medium">{employee.position || "No Position"}</p>
-              
+              <p className="text-muted-foreground font-medium">
+                {employee.position || "No Position"}
+              </p>
+
               <div className="mt-4 flex flex-wrap justify-center gap-2">
-                <Badge className={getStatusColor(employee.status)} variant="outline">
+                <Badge
+                  className={getStatusColor(employee.status)}
+                  variant="outline"
+                >
                   {employee.status}
                 </Badge>
                 <Badge variant="secondary" className="font-mono">
@@ -119,26 +143,49 @@ export default async function EmployeeProfilePage({ params }: PageProps) {
               </div>
 
               <div className="mt-6 grid grid-cols-2 gap-4 text-left">
-                 <div className="p-3 bg-muted/50 rounded-lg border border-border">
-                    <p className="text-xs text-muted-foreground uppercase">Department</p>
-                    <p className="font-semibold text-sm truncate text-foreground">{employee.department || "N/A"}</p>
-                 </div>
-                 <div className="p-3 bg-muted/50 rounded-lg border border-border">
-                    <p className="text-xs text-muted-foreground uppercase">Tenure</p>
-                    <p className="font-semibold text-sm text-foreground">
-                      {differenceInYears(new Date(), new Date(employee.dateHired))} Years
-                    </p>
-                 </div>
+                <div className="p-3 bg-muted/50 rounded-lg border border-border">
+                  <p className="text-xs text-muted-foreground uppercase">
+                    Department
+                  </p>
+                  <p className="font-semibold text-sm truncate text-foreground">
+                    {employee.department || "N/A"}
+                  </p>
+                </div>
+                <div className="p-3 bg-muted/50 rounded-lg border border-border">
+                  <p className="text-xs text-muted-foreground uppercase">
+                    Tenure
+                  </p>
+                  <p className="font-semibold text-sm text-foreground">
+                    {differenceInYears(
+                      new Date(),
+                      new Date(employee.dateHired),
+                    )}{" "}
+                    Yrs &{" "}
+                    {differenceInMonths(
+                      new Date(),
+                      new Date(employee.dateHired),
+                    ) % 12}{" "}
+                    Mos
+                  </p>
+                </div>
               </div>
 
               <div className="mt-6 space-y-3">
-                <Button variant="outline" className="w-full justify-start overflow-hidden text-ellipsis" asChild>
+                <Button
+                  variant="outline"
+                  className="w-full justify-start overflow-hidden text-ellipsis"
+                  asChild
+                >
                   <a href={`mailto:${employee.email}`}>
                     <Mail className="mr-2 h-4 w-4 text-muted-foreground" />
                     <span className="truncate">{employee.email}</span>
                   </a>
                 </Button>
-                <Button variant="outline" className="w-full justify-start" asChild>
+                <Button
+                  variant="outline"
+                  className="w-full justify-start"
+                  asChild
+                >
                   <a href={`tel:${employee.mobileNumber}`}>
                     <Phone className="mr-2 h-4 w-4 text-muted-foreground" />
                     {employee.mobileNumber || "No Mobile"}
@@ -157,11 +204,15 @@ export default async function EmployeeProfilePage({ params }: PageProps) {
             <CardContent className="space-y-3">
               <div className="flex items-center gap-3">
                 <div className="h-8 w-8 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center text-red-600 dark:text-red-400">
-                   <Phone className="h-4 w-4" />
+                  <Phone className="h-4 w-4" />
                 </div>
                 <div>
-                  <p className="font-medium text-sm text-foreground">{employee.emergencyContactName || "Not Set"}</p>
-                  <p className="text-xs text-muted-foreground">{employee.emergencyContactPhone || "N/A"}</p>
+                  <p className="font-medium text-sm text-foreground">
+                    {employee.emergencyContactName || "Not Set"}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {employee.emergencyContactPhone || "N/A"}
+                  </p>
                 </div>
               </div>
             </CardContent>
@@ -185,20 +236,37 @@ export default async function EmployeeProfilePage({ params }: PageProps) {
               <Card className="bg-card">
                 <CardHeader>
                   <CardTitle>Basic Information</CardTitle>
-                  <CardDescription>Personal bio-data and demographic info.</CardDescription>
+                  <CardDescription>
+                    Personal bio-data and demographic info.
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-6">
                     <DetailRow label="First Name" value={employee.firstName} />
-                    <DetailRow label="Middle Name" value={employee.middleName} />
+                    <DetailRow
+                      label="Middle Name"
+                      value={employee.middleName}
+                    />
                     <DetailRow label="Last Name" value={employee.lastName} />
                     <DetailRow label="Suffix" value={employee.suffix} />
                     <Separator className="sm:col-span-2 my-2" />
-                    <DetailRow label="Date of Birth" value={formatDate(employee.dateOfBirth)} />
-                    <DetailRow label="Age" value={calculateAge(employee.dateOfBirth)} />
+                    <DetailRow
+                      label="Date of Birth"
+                      value={formatDate(employee.dateOfBirth)}
+                    />
+                    <DetailRow
+                      label="Age"
+                      value={calculateAge(employee.dateOfBirth)}
+                    />
                     <DetailRow label="Gender" value={employee.gender} />
-                    <DetailRow label="Civil Status" value={employee.civilStatus} />
-                    <DetailRow label="Nationality" value={employee.nationality || "Filipino"} />
+                    <DetailRow
+                      label="Civil Status"
+                      value={employee.civilStatus}
+                    />
+                    <DetailRow
+                      label="Nationality"
+                      value={employee.nationality || "Filipino"}
+                    />
                   </dl>
                 </CardContent>
               </Card>
@@ -208,19 +276,32 @@ export default async function EmployeeProfilePage({ params }: PageProps) {
                   <CardTitle>Address & Contact</CardTitle>
                 </CardHeader>
                 <CardContent>
-                   <dl className="grid grid-cols-1 gap-y-4">
-                      <DetailRow label="Current Address" value={employee.address} fullWidth icon={<MapPin className="h-4 w-4 text-muted-foreground"/>} />
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-2">
-                        <DetailRow label="Personal Email" value={employee.personalEmail} />
-                        <DetailRow label="Mobile Number" value={employee.mobileNumber} />
-                      </div>
-                   </dl>
+                  <dl className="grid grid-cols-1 gap-y-4">
+                    <DetailRow
+                      label="Current Address"
+                      value={employee.address}
+                      fullWidth
+                      icon={
+                        <MapPin className="h-4 w-4 text-muted-foreground" />
+                      }
+                    />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-2">
+                      <DetailRow
+                        label="Personal Email"
+                        value={employee.personalEmail}
+                      />
+                      <DetailRow
+                        label="Mobile Number"
+                        value={employee.mobileNumber}
+                      />
+                    </div>
+                  </dl>
                 </CardContent>
               </Card>
             </TabsContent>
 
             {/* TAB: EMPLOYMENT */}
-            <TabsContent value="employment" className="mt-6 space-y-6">
+            {/* <TabsContent value="employment" className="mt-6 space-y-6">
                <Card className="bg-card">
                 <CardHeader>
                   <CardTitle>Job Details</CardTitle>
@@ -252,16 +333,88 @@ export default async function EmployeeProfilePage({ params }: PageProps) {
                    </div>
                 </CardContent>
               </Card>
+            </TabsContent> */}
+            <TabsContent value="employment" className="mt-6 space-y-6">
+              <Card className="bg-card">
+                <CardHeader>
+                  <CardTitle>Job Details</CardTitle>
+                  <CardDescription>Current role and status.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <dl className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <DetailRow
+                      label="Employee ID"
+                      value={employee.employeeNo}
+                    />
+                    <DetailRow
+                      label="Date Hired"
+                      value={formatDate(employee.dateHired)}
+                    />
+                    <DetailRow label="Position" value={employee.position} />
+                    <DetailRow label="Department" value={employee.department} />
+                    <DetailRow
+                      label="Employment Status"
+                      value={employee.status}
+                    />
+                    <DetailRow
+                      label="Regularization Date"
+                      value={formatDate(employee.dateRegularized)}
+                    />
+
+                    {/* --- NEW FIELD: DATE RESIGNED --- */}
+                    <DetailRow
+                      label="Date Resigned"
+                      value={
+                        employee.dateResigned
+                          ? formatDate(employee.dateResigned)
+                          : "N/A"
+                      }
+                    />
+                  </dl>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-card">
+                <CardHeader>
+                  <CardTitle>Government Identifiers</CardTitle>
+                  <CardDescription>
+                    Statutory numbers for payroll processing.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <GovtIdCard
+                      label="SSS Number"
+                      value={employee.sssNo}
+                      color="blue"
+                    />
+                    <GovtIdCard
+                      label="PhilHealth"
+                      value={employee.philHealthNo}
+                      color="green"
+                    />
+                    <GovtIdCard
+                      label="Pag-IBIG / HDMF"
+                      value={employee.pagIbigNo}
+                      color="orange"
+                    />
+                    <GovtIdCard
+                      label="TIN (Tax ID)"
+                      value={employee.tinNo}
+                      color="gray"
+                    />
+                  </div>
+                </CardContent>
+              </Card>
             </TabsContent>
 
             {/* TAB: FINANCIAL (UPDATED) */}
             <TabsContent value="financial" className="mt-6 space-y-6">
-              
               {/* 1. Compensation Section */}
               <Card className="bg-card border-l-4 border-l-emerald-500">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <Banknote className="h-5 w-5 text-emerald-600" /> 
+                    <Banknote className="h-5 w-5 text-emerald-600" />
                     Compensation & Benefits
                   </CardTitle>
                   <CardDescription>Current salary structure.</CardDescription>
@@ -269,29 +422,35 @@ export default async function EmployeeProfilePage({ params }: PageProps) {
                 <CardContent>
                   <dl className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                     <div className="p-4 bg-emerald-50/50 dark:bg-emerald-900/10 rounded-lg border border-emerald-100 dark:border-emerald-800/30">
-                        <dt className="text-xs font-semibold uppercase text-emerald-600 mb-1">Basic Salary</dt>
-                        <dd className="text-xl font-bold text-foreground font-mono">
-                            {formatCurrency(employee.basicSalary)}
-                        </dd>
-                        <span className="text-[10px] text-muted-foreground uppercase bg-background px-1 rounded border ml-1">
-                            {employee.salaryType || "DAILY"}
-                        </span>
+                      <dt className="text-xs font-semibold uppercase text-emerald-600 mb-1">
+                        Basic Salary
+                      </dt>
+                      <dd className="text-xl font-bold text-foreground font-mono">
+                        {formatCurrency(employee.basicSalary)}
+                      </dd>
+                      <span className="text-[10px] text-muted-foreground uppercase bg-background px-1 rounded border ml-1">
+                        {employee.salaryType || "DAILY"}
+                      </span>
                     </div>
 
                     <div className="p-4 bg-blue-50/50 dark:bg-blue-900/10 rounded-lg border border-blue-100 dark:border-blue-800/30">
-                        <dt className="text-xs font-semibold uppercase text-blue-600 mb-1">Allowance (Non-Tax)</dt>
-                        <dd className="text-xl font-bold text-foreground font-mono">
-                            {formatCurrency(employee.allowance)}
-                        </dd>
+                      <dt className="text-xs font-semibold uppercase text-blue-600 mb-1">
+                        Allowance (Non-Tax)
+                      </dt>
+                      <dd className="text-xl font-bold text-foreground font-mono">
+                        {formatCurrency(employee.allowance)}
+                      </dd>
                     </div>
 
                     <div className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border">
-                        <dt className="text-xs font-semibold uppercase text-muted-foreground mb-1">Rate Basis</dt>
-                        <dd className="text-sm font-medium text-foreground">
-                            {employee.salaryType === "MONTHLY" 
-                                ? "Fixed Monthly Rate" 
-                                : "Daily Rate (No Work No Pay)"}
-                        </dd>
+                      <dt className="text-xs font-semibold uppercase text-muted-foreground mb-1">
+                        Rate Basis
+                      </dt>
+                      <dd className="text-sm font-medium text-foreground">
+                        {employee.salaryType === "MONTHLY"
+                          ? "Fixed Monthly Rate"
+                          : "Daily Rate (No Work No Pay)"}
+                      </dd>
                     </div>
                   </dl>
                 </CardContent>
@@ -301,35 +460,47 @@ export default async function EmployeeProfilePage({ params }: PageProps) {
               <Card className="bg-card">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <Wallet className="h-5 w-5 text-muted-foreground" /> 
+                    <Wallet className="h-5 w-5 text-muted-foreground" />
                     Banking Details
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <dl className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                    <DetailRow label="Bank Name" value={employee.bankName} icon={<Building2 className="h-4 w-4"/>} />
-                    <DetailRow label="Account Number" value={employee.bankAccountNo} icon={<CreditCard className="h-4 w-4"/>} />
+                    <DetailRow
+                      label="Bank Name"
+                      value={employee.bankName}
+                      icon={<Building2 className="h-4 w-4" />}
+                    />
+                    <DetailRow
+                      label="Account Number"
+                      value={employee.bankAccountNo}
+                      icon={<CreditCard className="h-4 w-4" />}
+                    />
                   </dl>
                 </CardContent>
               </Card>
             </TabsContent>
-            
+
             {/* TAB: DOCUMENTS */}
-             <TabsContent value="documents" className="mt-6">
+            <TabsContent value="documents" className="mt-6">
               <Card className="border-dashed bg-muted/20">
                 <CardContent className="flex flex-col items-center justify-center py-10 text-center">
-                   <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center mb-4">
-                     <Download className="h-6 w-6 text-muted-foreground" />
-                   </div>
-                   <h3 className="font-semibold text-lg text-foreground">No Documents Uploaded</h3>
-                   <p className="text-muted-foreground text-sm max-w-sm mt-1">
-                     Upload contracts, resumes, and other 201 file documents here.
-                   </p>
-                   <Button variant="outline" className="mt-4">Upload Document</Button>
+                  <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center mb-4">
+                    <Download className="h-6 w-6 text-muted-foreground" />
+                  </div>
+                  <h3 className="font-semibold text-lg text-foreground">
+                    No Documents Uploaded
+                  </h3>
+                  <p className="text-muted-foreground text-sm max-w-sm mt-1">
+                    Upload contracts, resumes, and other 201 file documents
+                    here.
+                  </p>
+                  <Button variant="outline" className="mt-4">
+                    Upload Document
+                  </Button>
                 </CardContent>
               </Card>
             </TabsContent>
-
           </Tabs>
         </div>
       </div>
@@ -339,10 +510,16 @@ export default async function EmployeeProfilePage({ params }: PageProps) {
 
 // --- SUB-COMPONENTS ---
 
-function TabTrigger({ value, children }: { value: string, children: React.ReactNode }) {
+function TabTrigger({
+  value,
+  children,
+}: {
+  value: string;
+  children: React.ReactNode;
+}) {
   return (
-    <TabsTrigger 
-      value={value} 
+    <TabsTrigger
+      value={value}
       className="
         data-[state=active]:bg-transparent 
         data-[state=active]:shadow-none 
@@ -357,34 +534,59 @@ function TabTrigger({ value, children }: { value: string, children: React.ReactN
     >
       {children}
     </TabsTrigger>
-  )
+  );
 }
 
-function DetailRow({ label, value, icon, fullWidth }: { label: string, value: string | null | undefined, icon?: React.ReactNode, fullWidth?: boolean }) {
+function DetailRow({
+  label,
+  value,
+  icon,
+  fullWidth,
+}: {
+  label: string;
+  value: string | null | undefined;
+  icon?: React.ReactNode;
+  fullWidth?: boolean;
+}) {
   return (
     <div className={fullWidth ? "sm:col-span-2" : ""}>
       <dt className="text-sm font-medium text-muted-foreground flex items-center gap-2 mb-1">
         {icon} {label}
       </dt>
-      <dd className="text-base font-medium text-foreground">{value || "N/A"}</dd>
+      <dd className="text-base font-medium text-foreground">
+        {value || "N/A"}
+      </dd>
     </div>
-  )
+  );
 }
 
-function GovtIdCard({ label, value, color }: { label: string, value?: string | null, color: string }) {
-  const borderColor = {
-    blue: "border-l-blue-500",
-    green: "border-l-green-500",
-    orange: "border-l-orange-500",
-    gray: "border-l-gray-500",
-  }[color] || "border-l-gray-300";
+function GovtIdCard({
+  label,
+  value,
+  color,
+}: {
+  label: string;
+  value?: string | null;
+  color: string;
+}) {
+  const borderColor =
+    {
+      blue: "border-l-blue-500",
+      green: "border-l-green-500",
+      orange: "border-l-orange-500",
+      gray: "border-l-gray-500",
+    }[color] || "border-l-gray-300";
 
   return (
-    <div className={`p-4 border rounded-lg bg-card border-l-4 ${borderColor} shadow-sm transition-colors`}>
-      <p className="text-xs text-muted-foreground uppercase font-semibold">{label}</p>
+    <div
+      className={`p-4 border rounded-lg bg-card border-l-4 ${borderColor} shadow-sm transition-colors`}
+    >
+      <p className="text-xs text-muted-foreground uppercase font-semibold">
+        {label}
+      </p>
       <p className="text-lg font-mono font-medium tracking-wide mt-1 text-foreground">
         {value || "Not Recorded"}
       </p>
     </div>
-  )
+  );
 }

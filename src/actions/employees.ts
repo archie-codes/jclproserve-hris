@@ -30,7 +30,8 @@ const createEmployeeSchema = z.object({
   department: z.string().min(1),
   position: z.string().min(1),
   status: z.enum(["PROBATIONARY", "REGULAR", "CONTRACTUAL", "PROJECT_BASED"]),
-  dateHired: z.string(), 
+  dateHired: z.string(),
+  dateRegularized: z.string().optional(),
   
   sssNo: z.string().optional(),
   tinNo: z.string().optional(),
@@ -57,9 +58,11 @@ type UpdateEmployeeData = {
   
   employeeNo: string;
   status: string;
+  dateResigned?: string;
   department: string;
   position: string;
   dateHired: string;
+  dateRegularized?: string;
   email?: string;
 
   sssNo?: string;
@@ -267,7 +270,9 @@ export async function updateEmployee(id: string, data: UpdateEmployeeData) {
         status: data.status as "PROBATIONARY" | "REGULAR" | "CONTRACTUAL" | "PROJECT_BASED" | "ACTIVE" | "INACTIVE" | "TERMINATED" | "RESIGNED" | "AWOL",
         department: data.department || null,
         position: data.position || null,
+        dateResigned: data.dateResigned || null,
         dateHired: data.dateHired,
+        dateRegularized: data.dateRegularized || null,
         email: data.email || "",
 
         sssNo: data.sssNo || null,
