@@ -10,24 +10,35 @@ import {
   Settings,
   ShieldCheck,
   Briefcase,
-  UserCircle,
   Clock,
+  FileEdit, // Icon for Exams
+  ClipboardList, // Icon for Results
 } from "lucide-react";
 
-// ... (Your menu arrays adminMenu, hrMenu, staffMenu remain the same) ...
-
+// 1. UPDATE ADMIN MENU
 const adminMenu = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { label: "Attendance", href: "/dashboard/attendance", icon: Clock },
+  
+  // 👇 Split Recruitment into two links
+  { label: "Exam Builder", href: "/dashboard/recruitment/exams", icon: FileEdit },
+  { label: "Exam Results", href: "/dashboard/recruitment/results", icon: ClipboardList },
+  
   { label: "Employees", href: "/dashboard/employees", icon: Users },
   { label: "Reports", href: "/dashboard/reports", icon: FileText },
   { label: "System Users", href: "/dashboard/users", icon: ShieldCheck },
   { label: "Settings", href: "/dashboard/settings", icon: Settings },
 ];
 
+// 2. UPDATE HR MENU
 const hrMenu = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { label: "Attendance", href: "/dashboard/attendance", icon: Clock },
+
+  // 👇 Split Recruitment into two links
+  { label: "Exam Builder", href: "/dashboard/recruitment/exams", icon: FileEdit },
+  { label: "Exam Results", href: "/dashboard/recruitment/results", icon: ClipboardList },
+
   { label: "Employees", href: "/dashboard/employees", icon: Users },
   { label: "Reports", href: "/dashboard/reports", icon: FileText },
 ];
@@ -46,8 +57,6 @@ export function Sidebar({ role }: { role: string }) {
   if (role === "COORDINATOR") menu = staffMenu;
 
   return (
-    // 🔴 FIX: Removed 'hidden md:flex' and 'h-screen'. Added 'h-full'.
-    // This ensures it stays visible when rendered inside the Mobile Sheet.
     <aside className="w-full flex flex-col h-full bg-white dark:bg-gray-950 border-r border-gray-200 dark:border-gray-800 transition-colors duration-300">
       {/* Header */}
       <div className="h-16 flex items-center px-6 border-b border-gray-200 dark:border-gray-800">
