@@ -53,10 +53,9 @@
 //   );
 // }
 
-
 import { db } from "@/src/db";
 import { employees } from "@/src/db/schema";
-import { count, desc, eq, ne } from "drizzle-orm"; // Added 'ne' (not equal)
+import { count, desc, eq, ne } from "drizzle-orm"; 
 import DashboardClient from "@/components/dashboard/dashboard-client";
 import { requireAuth } from "@/lib/require-auth";
 
@@ -83,11 +82,17 @@ export default async function DashboardPage() {
   const recentJoiners = await db.query.employees.findMany({
     orderBy: [desc(employees.createdAt)],
     limit: 4,
+    
+    // 🔴 FIX 1: Use 'with' to fetch the Position relation
+    with: {
+        position: true,
+    },
+
+    // 🔴 FIX 2: Only put raw columns here (removed 'position: true')
     columns: {
       id: true,
       firstName: true,
       lastName: true,
-      position: true,
       createdAt: true,
     },
   });
@@ -96,13 +101,14 @@ export default async function DashboardPage() {
   const stats = {
     totalEmployees: totalEmpResult.value,
     activeEmployees: activeEmpResult.value,
-    resignedEmployees: resignedEmpResult.value, // This fixes the TypeScript error
+    resignedEmployees: resignedEmpResult.value, 
   };
 
   const formattedRecent = recentJoiners.map((emp) => ({
     id: emp.id,
     name: `${emp.firstName} ${emp.lastName}`,
-    position: emp.position || "Employee",
+    // 🔴 FIX 3: Extract the 'title' string from the position object
+    position: emp.position ? emp.position.title : "No Position", 
     createdAt: emp.createdAt,
   }));
 
