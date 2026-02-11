@@ -86,37 +86,33 @@
 //   }
 // }
 
-
 "use server";
 
 import { db } from "@/src/db";
 import { attendance, employees } from "@/src/db/schema";
-import { eq, and, or, asc, inArray } from "drizzle-orm"; // Added inArray
+import { eq, and, or, asc, inArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
 export async function getUtilityStaff() {
   try {
-    // Fetch active employees in Utility or Operations departments
+    // Fetch active employees
     const staff = await db.query.employees.findMany({
-      where: and(
-        // Filter by specific positions
-        or(
-          eq(employees.department, "IT"),
-          eq(employees.department, "HR"),
-          eq(employees.department, "FINANCE"),
-          eq(employees.department, "OPERATIONS"),
-        ),
-        // UPDATE: Allow Regular, Probationary, and Contractual (Exclude Resigned)
-        inArray(employees.status, ["REGULAR", "PROBATIONARY", "CONTRACTUAL"])
-      ),
+      where: inArray(employees.status, ["REGULAR", "PROBATIONARY", "CONTRACTUAL"]),
       orderBy: [asc(employees.lastName)],
+      
+      // 👇 IMPORTANT: Use 'with' to fetch the related Table data
+      with: {
+        department: true, // Fetches the full Department object
+        position: true,   // Fetches the full Position object
+      },
+      
+      // Optional: Only select specific raw columns from the Employee table
       columns: {
         id: true,
         firstName: true,
         lastName: true,
-        position: true,
-        department: true,
-        status: true, // UPDATE: Must include status for frontend filtering
+        status: true,
+        // Note: Do NOT put 'position' or 'department' here. They are handled by 'with'.
       },
     });
     
@@ -126,6 +122,8 @@ export async function getUtilityStaff() {
     return [];
   }
 }
+
+// ... (Rest of your saveBulkAttendance function remains the same) ...
 
 type AttendanceRecord = {
   employeeId: string;
@@ -144,10 +142,11 @@ export async function saveBulkAttendance(dateStr: string, records: AttendanceRec
       const timeOutDate = record.timeOut ? new Date(`${dateStr}T${record.timeOut}`) : null;
 
       // 3. Check if a record already exists for this person on this specific date
+      // Note: We search by employeeId AND date to ensure we don't duplicate
       const existing = await db.query.attendance.findFirst({
         where: and(
           eq(attendance.employeeId, record.employeeId),
-          eq(attendance.date, dateStr)
+          eq(attendance.date, dateStr) // Ensure your schema has a 'date' column or filter by timestamp range
         ),
       });
 
