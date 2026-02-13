@@ -1,3 +1,220 @@
+// "use client";
+
+// import * as React from "react";
+// import { useState } from "react";
+// import { cn } from "@/lib/utils";
+// import { Button } from "@/components/ui/button";
+// import { Card, CardContent } from "@/components/ui/card";
+// import {
+//   Field,
+//   FieldDescription,
+//   FieldGroup,
+//   FieldLabel,
+// } from "@/components/ui/field";
+// import { Input } from "@/components/ui/input";
+// import { Lock, Mail, Eye, EyeOff } from "lucide-react"; // Added Eye, EyeOff
+// import { useRouter } from "next/navigation";
+// import { LoadingModal } from "@/components/ui/loading-modal";
+
+// export function LoginForm({
+//   className,
+//   ...props
+// }: React.ComponentProps<"div">) {
+//   // 1. Add state to track visibility
+//   const [showPassword, setShowPassword] = useState(false);
+
+//   const router = useRouter();
+
+//   const [email, setEmail] = useState("");
+//   const [password, setPassword] = useState("");
+//   const [error, setError] = useState<string | null>(null);
+//   const [loading, setLoading] = useState(false);
+
+//   async function handleSubmit(e: React.FormEvent) {
+//     e.preventDefault();
+//     setError(null);
+//     setLoading(true);
+
+//     await new Promise((r) => setTimeout(r, 300));
+
+//     try {
+//       const res = await fetch("/api/auth/login", {
+//         method: "POST",
+//         headers: { "Content-Type": "application/json" },
+//         body: JSON.stringify({ email, password }),
+//       });
+
+//       const data = await res.json();
+
+//       if (!res.ok) {
+//         setError(data.error || "Login failed");
+//         setPassword("");
+//         setLoading(false);
+//         return;
+//       }
+
+//       // Success → go to dashboard
+//       router.push("/dashboard");
+//     } catch (err) {
+//       setError("Something went wrong. Please try again.");
+//       setLoading(false);
+//     }
+//   }
+
+//   return (
+//     <>
+//       <LoadingModal open={loading} text="Signing in..." />
+//       <div
+//         className={cn(
+//           "flex flex-col gap-6 w-full max-w-4xl mx-auto",
+//           className,
+//         )}
+//         {...props}
+//       >
+//         <Card className="overflow-hidden p-0 shadow-xl border-muted/40">
+//           <CardContent className="grid p-0 md:grid-cols-2 min-h-125">
+//             {/* LEFT SIDE: FORM */}
+//             <form
+//               onSubmit={handleSubmit}
+//               className="flex flex-col justify-center p-6 md:p-10 bg-background"
+//             >
+//               <FieldGroup className="space-y-6">
+//                 <div className="flex flex-col gap-2 text-center md:text-left">
+//                   <h1 className="text-3xl font-semibold tracking-tight">
+//                     Sign In
+//                   </h1>
+//                   <p className="text-muted-foreground text-sm">
+//                     Please enter your details to sign in.
+//                   </p>
+//                 </div>
+
+//                 <div className="space-y-4">
+//                   <Field>
+//                     <FieldLabel htmlFor="email">Email</FieldLabel>
+//                     <div className="relative">
+//                       <Mail className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+//                       <Input
+//                         id="email"
+//                         type="email"
+//                         placeholder="juan@jcl-proserve.com"
+//                         className="pl-9"
+//                         required
+//                         value={email}
+//                         onChange={(e) => setEmail(e.target.value)}
+//                       />
+//                     </div>
+//                   </Field>
+
+//                   <Field>
+//                     <div className="flex items-center justify-between">
+//                       <FieldLabel htmlFor="password">Password</FieldLabel>
+//                       <a
+//                         href="#"
+//                         className="text-xs font-medium text-primary hover:underline underline-offset-4"
+//                       >
+//                         Forgot password?
+//                       </a>
+//                     </div>
+
+//                     {/* 2. Password Input Wrapper */}
+//                     <div className="relative">
+//                       <Lock className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+
+//                       <Input
+//                         id="password"
+//                         type={showPassword ? "text" : "password"}
+//                         className="pl-9 pr-10"
+//                         required
+//                         value={password}
+//                         onChange={(e) => setPassword(e.target.value)}
+//                       />
+
+//                       {/* 5. The Toggle Button */}
+//                       <Button
+//                         type="button"
+//                         variant="ghost"
+//                         size="sm"
+//                         className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+//                         onClick={() => setShowPassword(!showPassword)}
+//                       >
+//                         {showPassword ? (
+//                           <EyeOff
+//                             className="h-4 w-4 text-muted-foreground"
+//                             aria-hidden="true"
+//                           />
+//                         ) : (
+//                           <Eye
+//                             className="h-4 w-4 text-muted-foreground"
+//                             aria-hidden="true"
+//                           />
+//                         )}
+//                         <span className="sr-only">
+//                           {showPassword ? "Hide password" : "Show password"}
+//                         </span>
+//                       </Button>
+//                     </div>
+//                   </Field>
+//                 </div>
+
+//                 <Field>
+//                   {/* {error && (
+//                     <p className="text-sm text-red-600 text-center">{error}</p>
+//                   )} */}
+//                   {error && (
+//                     <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300">
+//                       {error}
+//                     </div>
+//                   )}
+
+//                   <Button
+//                     type="submit"
+//                     className="bg-blue-600 hover:bg-blue-700 w-full text-base font-semibold py-5"
+//                     disabled={loading}
+//                   >
+//                     {loading ? "Signing in..." : "Sign In"}
+//                   </Button>
+//                 </Field>
+//               </FieldGroup>
+//             </form>
+
+//     {/* RIGHT SIDE: VISUALS */}
+//     <div className="relative hidden h-full flex-col bg-zinc-100 text-zinc-900 p-10 md:flex dark:bg-zinc-900 dark:text-white dark:border-l">
+//       <div className="absolute inset-0 bg-linear-to-b from-transparent to-black/5 dark:to-white/5" />
+
+//       <div className="relative z-20 flex h-full flex-col items-center justify-center text-center">
+//         <div className="mb-6 rounded-xl p-4 backdrop-blur-sm bg-white/40 shadow-sm dark:bg-white/10">
+//           <img
+//             src="/jcl-logo.svg"
+//             alt="JC&L Logo"
+//             className="h-36 w-auto drop-shadow-md"
+//           />
+//         </div>
+//         <h2 className="text-xl font-semibold tracking-tight">
+//           JC&L Proserve Inc.
+//         </h2>
+//         <p className="mt-2 text-muted-foreground max-w-xs text-sm text-balance">
+//           Reliable workforce solutions. Your trusted employment partner.
+//         </p>
+//       </div>
+//     </div>
+//   </CardContent>
+// </Card>
+
+//         <FieldDescription className="text-center text-xs text-muted-foreground">
+//           By clicking continue, you agree to our{" "}
+//           <a href="#" className="underline hover:text-primary">
+//             Terms of Service
+//           </a>{" "}
+//           and{" "}
+//           <a href="#" className="underline hover:text-primary">
+//             Privacy Policy
+//           </a>
+//           .
+//         </FieldDescription>
+//       </div>
+//     </>
+//   );
+// }
 "use client";
 
 import * as React from "react";
@@ -5,24 +222,27 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Lock, Mail, Eye, EyeOff, Loader2, AlertCircle } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { LoadingModal } from "@/components/ui/loading-modal"; // Assuming you have this component, otherwise remove
+
+// Helper components for Field structure (Standard Shadcn/UI pattern or your custom one)
+// If you don't have these specifically, standard divs work too.
+// Assuming they exist based on your provided code.
 import {
   Field,
-  FieldDescription,
   FieldGroup,
   FieldLabel,
+  FieldDescription,
 } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
-import { Lock, Mail, Eye, EyeOff } from "lucide-react"; // Added Eye, EyeOff
-import { useRouter } from "next/navigation";
-import { LoadingModal } from "@/components/ui/loading-modal";
 
 export function LoginForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
-  // 1. Add state to track visibility
   const [showPassword, setShowPassword] = useState(false);
-
   const router = useRouter();
 
   const [email, setEmail] = useState("");
@@ -35,7 +255,8 @@ export function LoginForm({
     setError(null);
     setLoading(true);
 
-    await new Promise((r) => setTimeout(r, 300));
+    // Simulate network delay for smooth animation
+    await new Promise((r) => setTimeout(r, 800));
 
     try {
       const res = await fetch("/api/auth/login", {
@@ -47,23 +268,24 @@ export function LoginForm({
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error || "Login failed");
-        setPassword("");
-        setLoading(false);
+        setError(data.error || "Invalid credentials");
+        setLoading(false); // Only stop loading if error
         return;
       }
 
-      // Success → go to dashboard
+      // Success: Keep loading state true while redirecting to avoid "flicker"
       router.push("/dashboard");
     } catch (err) {
-      setError("Something went wrong. Please try again.");
+      setError("Connection error. Please try again.");
       setLoading(false);
     }
   }
 
   return (
     <>
-      <LoadingModal open={loading} text="Signing in..." />
+      {/* Remove LoadingModal if you prefer the button loader, otherwise keep it */}
+      {/* <LoadingModal open={loading} text="Signing in..." /> */}
+
       <div
         className={cn(
           "flex flex-col gap-6 w-full max-w-4xl mx-auto",
@@ -72,7 +294,11 @@ export function LoginForm({
         {...props}
       >
         <Card className="overflow-hidden p-0 shadow-xl border-muted/40">
-          <CardContent className="grid p-0 md:grid-cols-2 min-h-125">
+          {/* 🔴 KEY FIX: 
+              1. 'items-stretch': Forces both columns (Form & Image) to be the same height.
+              2. 'min-h-[500px]': Sets a clear minimum height for the card.
+          */}
+          <CardContent className="grid p-0 md:grid-cols-2 min-h-[500px] items-stretch">
             {/* LEFT SIDE: FORM */}
             <form
               onSubmit={handleSubmit}
@@ -96,7 +322,7 @@ export function LoginForm({
                       <Input
                         id="email"
                         type="email"
-                        placeholder="juan@jcl-proserve.com"
+                        placeholder="name@company.com"
                         className="pl-9"
                         required
                         value={email}
@@ -115,11 +341,8 @@ export function LoginForm({
                         Forgot password?
                       </a>
                     </div>
-
-                    {/* 2. Password Input Wrapper */}
                     <div className="relative">
                       <Lock className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-
                       <Input
                         id="password"
                         type={showPassword ? "text" : "password"}
@@ -128,8 +351,6 @@ export function LoginForm({
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                       />
-
-                      {/* 5. The Toggle Button */}
                       <Button
                         type="button"
                         variant="ghost"
@@ -138,30 +359,17 @@ export function LoginForm({
                         onClick={() => setShowPassword(!showPassword)}
                       >
                         {showPassword ? (
-                          <EyeOff
-                            className="h-4 w-4 text-muted-foreground"
-                            aria-hidden="true"
-                          />
+                          <EyeOff className="h-4 w-4 text-muted-foreground" />
                         ) : (
-                          <Eye
-                            className="h-4 w-4 text-muted-foreground"
-                            aria-hidden="true"
-                          />
+                          <Eye className="h-4 w-4 text-muted-foreground" />
                         )}
-                        <span className="sr-only">
-                          {showPassword ? "Hide password" : "Show password"}
-                        </span>
                       </Button>
                     </div>
                   </Field>
-                </div>
 
-                <Field>
-                  {/* {error && (
-                    <p className="text-sm text-red-600 text-center">{error}</p>
-                  )} */}
                   {error && (
-                    <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300">
+                    <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 flex items-center gap-2">
+                      <AlertCircle className="h-4 w-4" />
                       {error}
                     </div>
                   )}
@@ -171,46 +379,47 @@ export function LoginForm({
                     className="bg-blue-600 hover:bg-blue-700 w-full text-base font-semibold py-5"
                     disabled={loading}
                   >
-                    {loading ? "Signing in..." : "Sign In"}
+                    {loading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />{" "}
+                        Signing in...
+                      </>
+                    ) : (
+                      "Sign In"
+                    )}
                   </Button>
-                </Field>
+                </div>
               </FieldGroup>
             </form>
 
             {/* RIGHT SIDE: VISUALS */}
-            <div className="relative hidden h-full flex-col bg-zinc-100 text-zinc-900 p-10 md:flex dark:bg-zinc-900 dark:text-white dark:border-l">
-              <div className="absolute inset-0 bg-linear-to-b from-transparent to-black/5 dark:to-white/5" />
+            <div
+              className="relative hidden h-full flex-col 
+            bg-linear-to-br from-slate-100 via-indigo-50 to-green-100 text-slate-800 p-10 md:flex 
+            dark:from-zinc-900 dark:via-indigo-900 dark:to-green-900 dark:text-white dark:border-l"
+            >
+              <div className="absolute inset-0 bg-linear-to-t from-black/5 to-transparent dark:from-white/5" />
 
               <div className="relative z-20 flex h-full flex-col items-center justify-center text-center">
-                <div className="mb-6 rounded-xl p-4 backdrop-blur-sm bg-white/40 shadow-sm dark:bg-white/10">
+                <div className="mb-6 rounded-xl p-4 backdrop-blur-sm bg-white/60 shadow-lg dark:bg-white/10">
                   <img
                     src="/jcl-logo.svg"
                     alt="JC&L Logo"
-                    className="h-36 w-auto drop-shadow-md"
+                    className="h-36 w-auto drop-shadow-xl"
                   />
                 </div>
+
                 <h2 className="text-xl font-semibold tracking-tight">
                   JC&L Proserve Inc.
                 </h2>
-                <p className="mt-2 text-muted-foreground max-w-xs text-sm text-balance">
+
+                <p className="mt-2 text-slate-600 dark:text-slate-300 max-w-xs text-sm">
                   Reliable workforce solutions. Your trusted employment partner.
                 </p>
               </div>
             </div>
           </CardContent>
         </Card>
-
-        <FieldDescription className="text-center text-xs text-muted-foreground">
-          By clicking continue, you agree to our{" "}
-          <a href="#" className="underline hover:text-primary">
-            Terms of Service
-          </a>{" "}
-          and{" "}
-          <a href="#" className="underline hover:text-primary">
-            Privacy Policy
-          </a>
-          .
-        </FieldDescription>
       </div>
     </>
   );
