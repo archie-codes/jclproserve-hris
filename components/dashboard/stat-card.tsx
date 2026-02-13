@@ -1,45 +1,76 @@
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LucideIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface StatCardProps {
   label: string;
   value: string;
   icon: LucideIcon;
-  trend?: string;
-  color?: string; // "blue", "green", "orange", "purple"
+  trend: string;
+  color: "blue" | "green" | "red" | "purple" | "orange" | "amber";
 }
 
-export function StatCard({ label, value, icon: Icon, trend, color = "blue" }: StatCardProps) {
-  
-  // Color Mapping logic
-  const colorMap: Record<string, string> = {
-    blue: "bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400",
-    green: "bg-green-50 text-green-600 dark:bg-green-900/20 dark:text-green-400",
-    orange: "bg-orange-50 text-orange-600 dark:bg-orange-900/20 dark:text-orange-400",
-    purple: "bg-purple-50 text-purple-600 dark:bg-purple-900/20 dark:text-purple-400",
+export function StatCard({
+  label,
+  value,
+  icon: Icon,
+  trend,
+  color,
+}: StatCardProps) {
+  // Map simple color names to complex Tailwind classes
+  const styles = {
+    blue: {
+      border: "border-l-blue-500",
+      bg: "bg-gradient-to-br from-white to-blue-50/50 dark:from-slate-950 dark:to-slate-900",
+      icon: "text-blue-500",
+    },
+    green: {
+      border: "border-l-emerald-500",
+      bg: "bg-gradient-to-br from-white to-emerald-50/50 dark:from-slate-950 dark:to-slate-900",
+      icon: "text-emerald-500",
+    },
+    red: {
+      border: "border-l-red-500",
+      bg: "bg-gradient-to-br from-white to-red-50/50 dark:from-slate-950 dark:to-slate-900",
+      icon: "text-red-500",
+    },
+    purple: {
+      border: "border-l-purple-500",
+      bg: "bg-gradient-to-br from-white to-purple-50/50 dark:from-slate-950 dark:to-slate-900",
+      icon: "text-purple-500",
+    },
+    orange: {
+      border: "border-l-orange-500",
+      bg: "bg-gradient-to-br from-white to-orange-50/50 dark:from-slate-950 dark:to-slate-900",
+      icon: "text-orange-500",
+    },
+    amber: {
+      border: "border-l-amber-500",
+      bg: "bg-gradient-to-br from-white to-amber-50/50 dark:from-slate-950 dark:to-slate-900",
+      icon: "text-amber-500",
+    },
   };
 
-  const iconClass = colorMap[color] || colorMap.blue;
+  const currentStyle = styles[color] || styles.blue;
 
   return (
-    <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-6 shadow-sm transition-all hover:shadow-md">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{label}</p>
-          <p className="mt-2 text-3xl font-bold text-gray-900 dark:text-gray-50">{value}</p>
-        </div>
-        <div className={`rounded-lg p-3 ${iconClass}`}>
-          <Icon className="h-6 w-6" />
-        </div>
-      </div>
-      
-      {trend && (
-        <div className="mt-4 flex items-center text-xs">
-          <span className="font-medium text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/30 px-2 py-0.5 rounded-full mr-2">
-            Trending
-          </span>
-          <span className="text-gray-500 dark:text-gray-400">{trend}</span>
-        </div>
+    <Card
+      className={cn(
+        "border-l-4 shadow-sm transition-all hover:shadow-md",
+        currentStyle.border,
+        currentStyle.bg,
       )}
-    </div>
+    >
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-sm font-medium text-muted-foreground">
+          {label}
+        </CardTitle>
+        <Icon className={cn("h-4 w-4", currentStyle.icon)} />
+      </CardHeader>
+      <CardContent>
+        <div className="text-2xl font-bold text-foreground">{value}</div>
+        <p className="text-xs text-muted-foreground mt-1">{trend}</p>
+      </CardContent>
+    </Card>
   );
 }

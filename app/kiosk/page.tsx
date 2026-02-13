@@ -16,14 +16,22 @@ export default async function KioskPage() {
   });
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4 md:p-8">
-      <div className="absolute inset-0 bg-grid-slate-200/50 mask-[linear-gradient(0deg,white,rgba(255,255,255,0.6))] -z-10" />
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center p-4 md:p-8 transition-colors duration-300">
       
-      {/* 🔴 FIX: Removed 'overflow-hidden' from here */}
-      <div className="w-full max-w-4xl bg-white shadow-2xl rounded-2xl border border-slate-200 relative">
+      {/* Background decoration - Adjusted for Dark Mode */}
+      <div className="absolute inset-0 bg-grid-slate-200/50 dark:bg-grid-slate-800/20 mask-[linear-gradient(0deg,white,rgba(255,255,255,0.6))] dark:mask-[linear-gradient(0deg,rgba(255,255,255,0.1),rgba(255,255,255,0))] -z-10 pointer-events-none" />
+      
+      {/* 🔴 MAIN CARD
+         - bg-white dark:bg-slate-900: Changes card background
+         - border-slate-200 dark:border-slate-800: Darkens the border
+      */}
+      <div className="w-full max-w-4xl bg-white dark:bg-slate-900 shadow-2xl rounded-2xl border border-slate-200 dark:border-slate-800 relative transition-all duration-300">
         
-        {/* Header Section: Added rounded-t-2xl to keep the top corners round */}
-        <div className="bg-slate-900 px-8 py-6 text-white flex justify-between items-center rounded-t-2xl">
+        {/* Header Section 
+           - bg-slate-900 dark:bg-black: Makes header slightly darker in dark mode
+           - border-b: Adds a separator line in dark mode so it doesn't blend too much
+        */}
+        <div className="bg-slate-900 dark:bg-black px-8 py-6 text-white flex justify-between items-center rounded-t-2xl border-b border-transparent dark:border-slate-800">
           <div>
             <h1 className="text-2xl font-bold tracking-wide">JC&L Recruitment</h1>
             <p className="text-slate-400 text-sm">Applicant Assessment Portal</p>
@@ -41,7 +49,7 @@ export default async function KioskPage() {
         </div>
       </div>
 
-      <p className="mt-6 text-center text-slate-400 text-xs">
+      <p className="mt-6 text-center text-slate-400 dark:text-slate-500 text-xs">
         &copy; {new Date().getFullYear()} JC&L HRIS System. All rights reserved.
       </p>
     </div>

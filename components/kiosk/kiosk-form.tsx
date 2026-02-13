@@ -145,7 +145,7 @@ export function KioskForm({ exams }: { exams: Exam[] }) {
             <Input
               value={position}
               onChange={(e) => setPosition(e.target.value.toUpperCase())}
-              placeholder="E.G. AREA COORDINATOR / ACCOUNTANT"
+              placeholder="E.G. AREA COORDINATOR / HOUSEKEEPING"
               className="h-12 text-lg bg-slate-50 border-slate-200 focus:ring-blue-500"
             />
           </div>

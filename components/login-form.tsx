@@ -80,8 +80,8 @@ export function LoginForm({
             >
               <FieldGroup className="space-y-6">
                 <div className="flex flex-col gap-2 text-center md:text-left">
-                  <h1 className="text-3xl font-bold tracking-tight">
-                    Welcome back
+                  <h1 className="text-3xl font-semibold tracking-tight">
+                    Sign In
                   </h1>
                   <p className="text-muted-foreground text-sm">
                     Please enter your details to sign in.
@@ -136,7 +136,7 @@ export function LoginForm({
                         size="sm"
                         className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
                         onClick={() => setShowPassword(!showPassword)}
-                      > 
+                      >
                         {showPassword ? (
                           <EyeOff
                             className="h-4 w-4 text-muted-foreground"
@@ -168,7 +168,7 @@ export function LoginForm({
 
                   <Button
                     type="submit"
-                    className="w-full text-base font-semibold py-5"
+                    className="bg-blue-600 hover:bg-blue-700 w-full text-base font-semibold py-5"
                     disabled={loading}
                   >
                     {loading ? "Signing in..." : "Sign In"}
@@ -194,12 +194,6 @@ export function LoginForm({
                 </h2>
                 <p className="mt-2 text-muted-foreground max-w-xs text-sm text-balance">
                   Reliable workforce solutions. Your trusted employment partner.
-                </p>
-              </div>
-
-              <div className="relative z-20 mt-auto">
-                <p className="text-xs text-muted-foreground text-center">
-                  © 2026 Secure Portal
                 </p>
               </div>
             </div>
