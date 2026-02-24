@@ -1,8 +1,8 @@
 // import { createUploadthing, type FileRouter } from "uploadthing/next";
 // import { auth } from "@/lib/auth";
- 
+
 // const f = createUploadthing();
- 
+
 // export const ourFileRouter = {
 //   // Define "employeeImage" endpoint
 //   employeeImage: f({ image: { maxFileSize: "4MB", maxFileCount: 1 } })
@@ -21,7 +21,7 @@
 //       return { url: file.url };
 //     }),
 // } satisfies FileRouter;
- 
+
 // export type OurFileRouter = typeof ourFileRouter;
 
 import { createUploadthing, type FileRouter } from "uploadthing/next";
@@ -34,7 +34,7 @@ export const ourFileRouter = {
   employeeImage: f({ image: { maxFileSize: "4MB", maxFileCount: 1 } })
     .middleware(async () => {
       // This will automatically throw "Unauthorized" if not logged in
-      const user = await requireAuth(); 
+      const user = await requireAuth();
       return { userId: user.id };
     })
     .onUploadComplete(async ({ file }) => {
@@ -52,6 +52,16 @@ export const ourFileRouter = {
       return { url: file.url };
     }),
 
+  // 3. Exam Question Image
+  examImage: f({ image: { maxFileSize: "4MB", maxFileCount: 1 } })
+    .middleware(async () => {
+      // Ensure only authenticated staff can upload exam images
+      const user = await requireAuth();
+      return { userId: user.id };
+    })
+    .onUploadComplete(async ({ file }) => {
+      return { url: file.url };
+    }),
 } satisfies FileRouter;
 
 export type OurFileRouter = typeof ourFileRouter;

@@ -251,7 +251,6 @@
 //   }),
 // }));
 
-
 /* ================= UPDATED SCHEMA 02/10/2026 ================= */
 
 import {
@@ -267,7 +266,8 @@ import {
   index,
   integer,
   time,
-  bigint
+  bigint,
+  doublePrecision,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
@@ -358,7 +358,7 @@ export const positions = pgTable("positions", {
   title: varchar("title", { length: 100 }).notNull(),
   departmentId: uuid("department_id").references(() => departments.id),
   // Optional base rate for this position to auto-fill employee salary
-  basicRate: integer("basic_rate"), 
+  basicRate: integer("basic_rate"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -368,9 +368,9 @@ export const shifts = pgTable("shifts", {
   id: uuid("id").defaultRandom().primaryKey(),
   name: varchar("name", { length: 50 }).notNull(), // e.g., "Morning Shift", "Graveyard"
   startTime: time("start_time").notNull(), // "08:00:00"
-  endTime: time("end_time").notNull(),     // "17:00:00"
+  endTime: time("end_time").notNull(), // "17:00:00"
   breakStartTime: time("break_start_time"), // "12:00:00"
-  breakEndTime: time("break_end_time"),     // "13:00:00"
+  breakEndTime: time("break_end_time"), // "13:00:00"
   nightDiffEnabled: boolean("night_diff_enabled").default(false),
   isActive: boolean("is_active").default(true),
 });
@@ -442,9 +442,14 @@ export const employees = pgTable(
     // --- G. COMPENSATION ---
     // Stored in cents (e.g., 500.00 -> 50000)
     basicSalary: bigint("basic_salary", { mode: "number" }).default(0),
-    salaryType: varchar("salary_type", { length: 20 }).default("SEMI_MONTHLY"), 
+    salaryType: varchar("salary_type", { length: 20 }).default("SEMI_MONTHLY"),
     deMinimis: integer("de_minimis").default(0), // Non-taxable benefits
-    taxableAllowance: bigint("taxable_allowance", { mode: "number" }).default(0),
+    taxableAllowance: bigint("taxable_allowance", { mode: "number" }).default(
+      0,
+    ),
+
+    // --- H. SECURITY ---
+    pinCode: text("pin_code").default("1234"),
   },
   (table) => {
     return [
@@ -473,7 +478,7 @@ export const employeeDocuments = pgTable(
   },
   (table) => {
     return [index("documents_employee_idx").on(table.employeeId)];
-  }
+  },
 );
 
 /* ================= ATTENDANCE ================= */
@@ -485,16 +490,18 @@ export const attendance = pgTable(
     employeeId: uuid("employee_id")
       .references(() => employees.id, { onDelete: "cascade" })
       .notNull(),
-    
+
     // Shift assigned for this specific day (in case they change shifts)
-    shiftId: uuid("shift_id").references(() => shifts.id), 
+    shiftId: uuid("shift_id").references(() => shifts.id),
 
     date: date("date").notNull(),
-    
+
     timeIn: timestamp("time_in"),
     breakOut: timestamp("break_out"), // Lunch Start
-    breakIn: timestamp("break_in"),   // Lunch End
+    breakIn: timestamp("break_in"), // Lunch End
     timeOut: timestamp("time_out"),
+
+    totalHours: doublePrecision("total_hours").default(0),
 
     // Computed columns (Populated via backend logic)
     lateMinutes: integer("late_minutes").default(0),
@@ -507,7 +514,7 @@ export const attendance = pgTable(
   },
   (table) => {
     return [index("attendance_employee_idx").on(table.employeeId)];
-  }
+  },
 );
 
 /* ================= LEAVES ================= */
@@ -529,74 +536,133 @@ export const leaves = pgTable(
   },
   (table) => {
     return [index("leaves_employee_idx").on(table.employeeId)];
-  }
+  },
 );
 
 /* ================= PAYROLL MODULE (New) ================= */
 
-export const payrollRuns = pgTable("payroll_runs", {
+// export const payrollRuns = pgTable("payroll_runs", {
+//   id: uuid("id").defaultRandom().primaryKey(),
+//   startDate: date("start_date").notNull(), // e.g. Oct 1
+//   endDate: date("end_date").notNull(), // e.g. Oct 15
+//   payoutDate: date("payout_date").notNull(), // e.g. Oct 15 or 16
+
+//   // REGULAR, 13TH_MONTH, FINAL_PAY
+//   type: varchar("type", { length: 20 }).default("REGULAR"),
+//   status: varchar("status", { length: 20 }).default("DRAFT"), // DRAFT, APPROVED, PAID
+
+//   processedBy: uuid("processed_by").references(() => users.id),
+//   createdAt: timestamp("created_at").defaultNow(),
+// });
+
+// export const payslips = pgTable("payslips", {
+//   id: uuid("id").defaultRandom().primaryKey(),
+//   payrollRunId: uuid("payroll_run_id")
+//     .references(() => payrollRuns.id)
+//     .notNull(),
+//   employeeId: uuid("employee_id")
+//     .references(() => employees.id)
+//     .notNull(),
+
+//   // Earnings (Stored as integers/cents)
+//   basicPay: integer("basic_pay").notNull(),
+//   overtimePay: integer("overtime_pay").default(0),
+//   nightDiffPay: integer("night_diff_pay").default(0),
+//   holidayPay: integer("holiday_pay").default(0),
+//   allowances: integer("allowances").default(0),
+
+//   // Deductions
+//   sssDeduction: integer("sss_deduction").default(0),
+//   philhealthDeduction: integer("philhealth_deduction").default(0),
+//   pagibigDeduction: integer("pagibig_deduction").default(0),
+//   taxDeduction: integer("tax_deduction").default(0),
+//   loanDeductions: integer("loan_deductions").default(0),
+//   lateDeductions: integer("late_deductions").default(0), // Computed from lates
+//   undertimeDeductions: integer("undertime_deductions").default(0),
+
+//   // Totals
+//   grossPay: integer("gross_pay").notNull(),
+//   netPay: integer("net_pay").notNull(),
+
+//   // JSON snapshot of calculations for transparency/audit
+//   calculationSnapshot: jsonb("calculation_snapshot"),
+//   createdAt: timestamp("created_at").defaultNow(),
+// });
+
+/* ================= PAYROLL MODULE (Aligned with Server Actions) ================= */
+
+export const payrollPeriods = pgTable("payroll_periods", {
   id: uuid("id").defaultRandom().primaryKey(),
-  startDate: date("start_date").notNull(), // e.g. Oct 1
-  endDate: date("end_date").notNull(),     // e.g. Oct 15
-  payoutDate: date("payout_date").notNull(), // e.g. Oct 15 or 16
-  
-  // REGULAR, 13TH_MONTH, FINAL_PAY
-  type: varchar("type", { length: 20 }).default("REGULAR"), 
-  status: varchar("status", { length: 20 }).default("DRAFT"), // DRAFT, APPROVED, PAID
-  
-  processedBy: uuid("processed_by").references(() => users.id),
+  startDate: date("start_date").notNull(),
+  endDate: date("end_date").notNull(),
+  status: text("status", { enum: ["DRAFT", "LOCKED", "PAID"] }).default(
+    "DRAFT",
+  ),
+  totalAmount: doublePrecision("total_amount").default(0),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
 export const payslips = pgTable("payslips", {
   id: uuid("id").defaultRandom().primaryKey(),
-  payrollRunId: uuid("payroll_run_id").references(() => payrollRuns.id).notNull(),
-  employeeId: uuid("employee_id").references(() => employees.id).notNull(),
-  
-  // Earnings (Stored as integers/cents)
-  basicPay: integer("basic_pay").notNull(),
-  overtimePay: integer("overtime_pay").default(0),
-  nightDiffPay: integer("night_diff_pay").default(0),
-  holidayPay: integer("holiday_pay").default(0),
-  allowances: integer("allowances").default(0),
-  
-  // Deductions
-  sssDeduction: integer("sss_deduction").default(0),
-  philhealthDeduction: integer("philhealth_deduction").default(0),
-  pagibigDeduction: integer("pagibig_deduction").default(0),
-  taxDeduction: integer("tax_deduction").default(0),
-  loanDeductions: integer("loan_deductions").default(0),
-  lateDeductions: integer("late_deductions").default(0), // Computed from lates
-  undertimeDeductions: integer("undertime_deductions").default(0),
+  payrollPeriodId: uuid("payroll_period_id")
+    .references(() => payrollPeriods.id)
+    .notNull(),
+  employeeId: uuid("employee_id")
+    .references(() => employees.id)
+    .notNull(),
 
-  // Totals
-  grossPay: integer("gross_pay").notNull(),
-  netPay: integer("net_pay").notNull(),
-  
-  // JSON snapshot of calculations for transparency/audit
-  calculationSnapshot: jsonb("calculation_snapshot"), 
-  createdAt: timestamp("created_at").defaultNow(),
+  // Earnings
+  basicSalary: doublePrecision("basic_salary").default(0),
+  daysWorked: doublePrecision("days_worked").default(0),
+  grossIncome: doublePrecision("gross_income").default(0),
+
+  // Deductions
+  sss: doublePrecision("sss").default(0),
+  philhealth: doublePrecision("philhealth").default(0),
+  pagibig: doublePrecision("pagibig").default(0),
+  totalDeductions: doublePrecision("total_deductions").default(0),
+
+  // Net
+  netPay: doublePrecision("net_pay").default(0),
+  generatedAt: timestamp("generated_at").defaultNow(),
 });
+
+// Update Relations accordingly
+export const payrollPeriodRelations = relations(payrollPeriods, ({ many }) => ({
+  payslips: many(payslips),
+}));
+
+export const payslipRelations = relations(payslips, ({ one }) => ({
+  period: one(payrollPeriods, {
+    fields: [payslips.payrollPeriodId],
+    references: [payrollPeriods.id],
+  }),
+  employee: one(employees, {
+    fields: [payslips.employeeId],
+    references: [employees.id],
+  }),
+}));
 
 /* ================= LOAN LEDGER (New) ================= */
 
 export const loans = pgTable("loans", {
   id: uuid("id").defaultRandom().primaryKey(),
-  employeeId: uuid("employee_id").references(() => employees.id).notNull(),
+  employeeId: uuid("employee_id")
+    .references(() => employees.id)
+    .notNull(),
   type: loanTypeEnum("type").notNull(),
-  
+
   principalAmount: integer("principal_amount").notNull(),
   monthlyAmortization: integer("monthly_amortization").notNull(),
-  
+
   totalPaid: integer("total_paid").default(0),
   status: varchar("status", { length: 20 }).default("ACTIVE"), // ACTIVE, PAID_OFF
-  
+
   startDate: date("start_date"),
   endDate: date("end_date"),
-  
+
   createdAt: timestamp("created_at").defaultNow(),
 });
-
 
 /* ================= FOR EXAMS ================= */
 
@@ -604,7 +670,7 @@ export const loans = pgTable("loans", {
 export const exams = pgTable("exams", {
   id: uuid("id").defaultRandom().primaryKey(),
   title: text("title").notNull(), // e.g. "General Logic"
-  description: text("description"), 
+  description: text("description"),
   passingScore: integer("passing_score").default(70), // Percentage
   timeLimit: integer("time_limit").default(60), // Minutes
   isActive: boolean("is_active").default(true),
@@ -616,34 +682,38 @@ export const questions = pgTable("questions", {
   id: uuid("id").defaultRandom().primaryKey(),
   examId: uuid("exam_id").references(() => exams.id, { onDelete: "cascade" }),
   text: text("text").notNull(),
-  points: integer("points").default(1),
-  order: integer("order").default(0),
+  imageUrl: text("image_url"), // 👈 NEW: For visual puzzles
+  points: integer("points").default(1), // 👈 EXISTING: Keep this!
+  order: integer("order").notNull().default(0),
 });
 
 // 3. CHOICES (For Multiple Choice)
 export const questionChoices = pgTable("question_choices", {
   id: uuid("id").defaultRandom().primaryKey(),
-  questionId: uuid("question_id").references(() => questions.id, { onDelete: "cascade" }),
+  questionId: uuid("question_id").references(() => questions.id, {
+    onDelete: "cascade",
+  }),
   text: text("text").notNull(),
-  isCorrect: boolean("is_correct").default(false),
+  imageUrl: text("image_url"), // 👈 NEW: For option visuals
+  isCorrect: boolean("is_correct").notNull().default(false),
 });
 
 // 4. APPLICANT EXAM RESULTS (The Record of the Walk-in)
 export const applicantResults = pgTable("applicant_results", {
   id: uuid("id").defaultRandom().primaryKey(),
   examId: uuid("exam_id").references(() => exams.id),
-  
+
   // Basic Applicant Info (Captured at Kiosk start)
   lastName: text("last_name").notNull(),
   firstName: text("first_name").notNull(),
-  positionApplied: text("position_applied").notNull(), 
-  
+  positionApplied: text("position_applied").notNull(),
+
   // Result Data
-  score: integer("score").notNull(),      // e.g. 15
+  score: integer("score").notNull(), // e.g. 15
   totalPoints: integer("total_points").notNull(), // e.g. 20
-  percentage: integer("percentage").notNull(),    // e.g. 75
-  status: text("status").notNull(),       // "PASSED" or "FAILED"
-  
+  percentage: integer("percentage").notNull(), // e.g. 75
+  status: text("status").notNull(), // "PASSED" or "FAILED"
+
   dateTaken: timestamp("date_taken").defaultNow(),
 });
 
@@ -722,34 +792,22 @@ export const leavesRelations = relations(leaves, ({ one }) => ({
   }),
 }));
 
-export const payrollRunsRelations = relations(payrollRuns, ({ one, many }) => ({
-  processor: one(users, {
-    fields: [payrollRuns.processedBy],
-    references: [users.id],
-  }),
-  payslips: many(payslips),
-}));
-
 export const payslipsRelations = relations(payslips, ({ one }) => ({
-  run: one(payrollRuns, {
-    fields: [payslips.payrollRunId],
-    references: [payrollRuns.id],
+  period: one(payrollPeriods, {
+    fields: [payslips.payrollPeriodId],
+    references: [payrollPeriods.id],
   }),
   employee: one(employees, {
     fields: [payslips.employeeId],
     references: [employees.id],
   }),
 }));
-
 export const loansRelations = relations(loans, ({ one }) => ({
   employee: one(employees, {
     fields: [loans.employeeId],
     references: [employees.id],
   }),
 }));
-
-
-
 
 /* ================= RELATIONS FOR EXAMS ================= */
 
@@ -763,10 +821,22 @@ export const questionsRelations = relations(questions, ({ one, many }) => ({
   choices: many(questionChoices),
 }));
 
-export const questionChoicesRelations = relations(questionChoices, ({ one }) => ({
-  question: one(questions, { fields: [questionChoices.questionId], references: [questions.id] }),
-}));
+export const questionChoicesRelations = relations(
+  questionChoices,
+  ({ one }) => ({
+    question: one(questions, {
+      fields: [questionChoices.questionId],
+      references: [questions.id],
+    }),
+  }),
+);
 
-export const applicantResultsRelations = relations(applicantResults, ({ one }) => ({
-  exam: one(exams, { fields: [applicantResults.examId], references: [exams.id] }),
-}));
+export const applicantResultsRelations = relations(
+  applicantResults,
+  ({ one }) => ({
+    exam: one(exams, {
+      fields: [applicantResults.examId],
+      references: [exams.id],
+    }),
+  }),
+);

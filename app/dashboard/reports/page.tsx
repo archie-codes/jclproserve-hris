@@ -27,7 +27,7 @@ import * as XLSX from "xlsx";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 
-import { getExportData } from "@/src/actions/reports";
+import { getExportData, getRecruitmentExportData } from "@/src/actions/reports";
 
 export default function ReportsPage() {
   // --- EXCEL EXPORT LOGIC ---
@@ -131,6 +131,43 @@ export default function ReportsPage() {
     }
   };
 
+  // --- RECRUITMENT EXPORT LOGIC ---
+  const handleExportRecruitmentExcel = async () => {
+    const toastId = toast.loading("Preparing Recruitment Data...");
+    try {
+      // You'll need to create this server action next
+      const res = await getRecruitmentExportData();
+
+      if (!res.success || !res.data) {
+        toast.error(res.error || "Export failed", { id: toastId });
+        return;
+      }
+
+      const cleanData = res.data.map((result: any) => ({
+        "Date Taken": new Date(result.dateTaken).toLocaleDateString(),
+        "First Name": result.firstName,
+        "Last Name": result.lastName,
+        "Position Applied": result.positionApplied,
+        "Exam Title": result.exam?.title || "N/A",
+        "Raw Score": `${result.score} / ${result.totalPoints}`,
+        Percentage: `${result.percentage}%`,
+        Status: result.status,
+      }));
+
+      const worksheet = XLSX.utils.json_to_sheet(cleanData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Exam Results");
+
+      XLSX.writeFile(
+        workbook,
+        `Recruitment_Report_${new Date().getFullYear()}.xlsx`,
+      );
+      toast.success("Recruitment data exported!", { id: toastId });
+    } catch (error) {
+      toast.error("An unexpected error occurred", { id: toastId });
+    }
+  };
+
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       {/* 1. HEADER SECTION */}
@@ -186,6 +223,27 @@ export default function ReportsPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* RECRUITMENT CARD */}
+      <Card className="border-l-4 border-l-purple-500 shadow-sm hover:shadow-md transition-all bg-linear-to-br from-white to-purple-50/50 dark:from-slate-950 dark:to-slate-900">
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-purple-700 dark:text-purple-400">
+            <TrendingUp className="h-5 w-5" /> Recruitment Analytics
+          </CardTitle>
+          <CardDescription>
+            Export applicant exam performance and passing rates for technical
+            assessments.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button
+            onClick={handleExportRecruitmentExcel}
+            className="w-full bg-purple-600 hover:bg-purple-700 text-white shadow-sm"
+          >
+            <Download className="mr-2 h-4 w-4" /> Export Exam Results (.xlsx)
+          </Button>
+        </CardContent>
+      </Card>
 
       {/* 3. INSIGHTS PREVIEW (Matching Style) */}
       <div>
