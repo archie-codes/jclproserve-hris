@@ -539,56 +539,6 @@ export const leaves = pgTable(
   },
 );
 
-/* ================= PAYROLL MODULE (New) ================= */
-
-// export const payrollRuns = pgTable("payroll_runs", {
-//   id: uuid("id").defaultRandom().primaryKey(),
-//   startDate: date("start_date").notNull(), // e.g. Oct 1
-//   endDate: date("end_date").notNull(), // e.g. Oct 15
-//   payoutDate: date("payout_date").notNull(), // e.g. Oct 15 or 16
-
-//   // REGULAR, 13TH_MONTH, FINAL_PAY
-//   type: varchar("type", { length: 20 }).default("REGULAR"),
-//   status: varchar("status", { length: 20 }).default("DRAFT"), // DRAFT, APPROVED, PAID
-
-//   processedBy: uuid("processed_by").references(() => users.id),
-//   createdAt: timestamp("created_at").defaultNow(),
-// });
-
-// export const payslips = pgTable("payslips", {
-//   id: uuid("id").defaultRandom().primaryKey(),
-//   payrollRunId: uuid("payroll_run_id")
-//     .references(() => payrollRuns.id)
-//     .notNull(),
-//   employeeId: uuid("employee_id")
-//     .references(() => employees.id)
-//     .notNull(),
-
-//   // Earnings (Stored as integers/cents)
-//   basicPay: integer("basic_pay").notNull(),
-//   overtimePay: integer("overtime_pay").default(0),
-//   nightDiffPay: integer("night_diff_pay").default(0),
-//   holidayPay: integer("holiday_pay").default(0),
-//   allowances: integer("allowances").default(0),
-
-//   // Deductions
-//   sssDeduction: integer("sss_deduction").default(0),
-//   philhealthDeduction: integer("philhealth_deduction").default(0),
-//   pagibigDeduction: integer("pagibig_deduction").default(0),
-//   taxDeduction: integer("tax_deduction").default(0),
-//   loanDeductions: integer("loan_deductions").default(0),
-//   lateDeductions: integer("late_deductions").default(0), // Computed from lates
-//   undertimeDeductions: integer("undertime_deductions").default(0),
-
-//   // Totals
-//   grossPay: integer("gross_pay").notNull(),
-//   netPay: integer("net_pay").notNull(),
-
-//   // JSON snapshot of calculations for transparency/audit
-//   calculationSnapshot: jsonb("calculation_snapshot"),
-//   createdAt: timestamp("created_at").defaultNow(),
-// });
-
 /* ================= PAYROLL MODULE (Aligned with Server Actions) ================= */
 
 export const payrollPeriods = pgTable("payroll_periods", {
@@ -622,6 +572,9 @@ export const payslips = pgTable("payslips", {
   pagibig: doublePrecision("pagibig").default(0),
   totalDeductions: doublePrecision("total_deductions").default(0),
 
+  otherDeductions: doublePrecision("other_deductions").default(0), // For manual HR edits
+  notes: text("notes"), // To explain WHY the deduction changed
+
   // Net
   netPay: doublePrecision("net_pay").default(0),
   generatedAt: timestamp("generated_at").defaultNow(),
@@ -642,6 +595,14 @@ export const payslipRelations = relations(payslips, ({ one }) => ({
     references: [employees.id],
   }),
 }));
+
+export const payrollSettings = pgTable("payroll_settings", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  sssRate: doublePrecision("sss_rate").default(0.045), // 4.5%
+  philhealthRate: doublePrecision("philhealth_rate").default(0.025), // 2.5%
+  pagibigAmount: doublePrecision("pagibig_amount").default(200), // Standard ₱200
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
 
 /* ================= LOAN LEDGER (New) ================= */
 

@@ -75,7 +75,11 @@ export default function AttendanceKioskPage() {
           </span>
         </div>
         <h1 className="text-7xl sm:text-8xl font-black tracking-tighter tabular-nums text-white drop-shadow-2xl">
-          {time.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+          {time.toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
+          })}
         </h1>
         <p className="text-slate-400 font-medium text-xl mt-2 tracking-wide">
           {time.toLocaleDateString(undefined, {
@@ -137,7 +141,7 @@ export default function AttendanceKioskPage() {
           <div className="grid grid-cols-2 gap-4 pt-2">
             <Button
               size="lg"
-              className="bg-emerald-600 hover:bg-emerald-500 text-white h-16 text-lg font-bold shadow-lg shadow-emerald-900/20 transition-all hover:-translate-y-1"
+              className="bg-emerald-600 hover:bg-emerald-500 text-white h-16 text-lg font-bold shadow-lg shadow-emerald-900/20 transition-all"
               onClick={() => handleSubmit("IN")}
               disabled={loading}
             >
@@ -152,7 +156,7 @@ export default function AttendanceKioskPage() {
 
             <Button
               size="lg"
-              className="bg-amber-600 hover:bg-amber-500 text-white h-16 text-lg font-bold shadow-lg shadow-amber-900/20 transition-all hover:-translate-y-1"
+              className="bg-amber-600 hover:bg-amber-500 text-white h-16 text-lg font-bold shadow-lg shadow-amber-900/20 transition-all"
               onClick={() => handleSubmit("OUT")}
               disabled={loading}
             >

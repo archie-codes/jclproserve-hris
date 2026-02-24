@@ -19,21 +19,20 @@ import {
 import Link from "next/link";
 import { format } from "date-fns";
 
-export const dynamic = "force-dynamic"; // Ensure we always see the latest data
+export const dynamic = "force-dynamic";
 
 export default async function PayrollPage() {
   const periods = await getPayrollPeriods();
 
-  // Quick Stats Calculation
+  // 👇 FIX: Added explicit types here (acc: number, curr: any, p: any)
   const totalDisbursed = periods
-    .filter((p) => p.status === "PAID")
-    .reduce((acc, curr) => acc + (curr.totalAmount || 0), 0);
+    .filter((p: any) => p.status === "PAID")
+    .reduce((acc: number, curr: any) => acc + (curr.totalAmount || 0), 0);
 
-  const activePeriod = periods.find((p) => p.status === "DRAFT");
+  const activePeriod = periods.find((p: any) => p.status === "DRAFT");
 
   return (
     <div className="space-y-8 p-1 animate-in fade-in slide-in-from-bottom-4 duration-700">
-      {/* 1. Header Section */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-foreground">
@@ -43,11 +42,9 @@ export default async function PayrollPage() {
             Manage salary releases, view history, and generate payslips.
           </p>
         </div>
-        {/* This is the modal we built earlier */}
         <CreatePayrollModal />
       </div>
 
-      {/* 2. Stats Row */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card className="border-l-4 border-l-emerald-500 shadow-sm bg-linear-to-br from-white to-emerald-50/50 dark:from-slate-950 dark:to-slate-900">
           <CardHeader className="pb-2">
@@ -109,7 +106,6 @@ export default async function PayrollPage() {
         </Card>
       </div>
 
-      {/* 3. Payroll Periods List */}
       <div>
         <h2 className="text-lg font-semibold mb-4 text-foreground">
           Payroll History
@@ -130,7 +126,8 @@ export default async function PayrollPage() {
           </div>
         ) : (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {periods.map((period) => {
+            {/* 👇 FIX: Added (period: any) here */}
+            {periods.map((period: any) => {
               const start = new Date(period.startDate);
               const end = new Date(period.endDate);
               const isDraft = period.status === "DRAFT";
@@ -142,10 +139,7 @@ export default async function PayrollPage() {
                   className="group"
                 >
                   <Card
-                    className={`
-                    border-l-4 shadow-sm hover:shadow-md transition-all duration-300 relative overflow-hidden bg-white dark:bg-slate-950
-                    ${isDraft ? "border-l-amber-500 border-amber-200/50" : "border-l-slate-400 dark:border-l-slate-600"}
-                  `}
+                    className={`border-l-4 shadow-sm hover:shadow-md transition-all duration-300 relative overflow-hidden bg-white dark:bg-slate-950 ${isDraft ? "border-l-amber-500 border-amber-200/50" : "border-l-slate-400 dark:border-l-slate-600"}`}
                   >
                     <CardHeader className="pb-3 pl-6">
                       <div className="flex justify-between items-start">
@@ -159,19 +153,12 @@ export default async function PayrollPage() {
                         </div>
                         <Badge
                           variant="outline"
-                          className={`
-                          ${
-                            isDraft
-                              ? "bg-amber-50 text-amber-700 border-amber-200 animate-pulse"
-                              : "bg-slate-100 text-slate-600 border-slate-200"
-                          }
-                        `}
+                          className={`${isDraft ? "bg-amber-50 text-amber-700 border-amber-200 animate-pulse" : "bg-slate-100 text-slate-600 border-slate-200"}`}
                         >
                           {period.status}
                         </Badge>
                       </div>
                     </CardHeader>
-
                     <CardContent className="pl-6 pb-4">
                       <div className="flex justify-between items-end">
                         <div>

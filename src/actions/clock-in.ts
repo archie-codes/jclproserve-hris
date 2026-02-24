@@ -10,7 +10,13 @@ export async function clockInOrOut(
   pin: string,
   type: "IN" | "OUT",
 ) {
-  const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
+  // 👇 FIX 1: Force Philippine Timezone for the "Today" string
+  const today = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Manila",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date()); // Outputs reliable "YYYY-MM-DD" in PH time
 
   try {
     // 1. Find Employee
@@ -20,8 +26,7 @@ export async function clockInOrOut(
 
     if (!employee) return { success: false, error: "Employee ID not found." };
 
-    // 2. Verify PIN (Simple security)
-    // Note: Ensure you added 'pinCode' to your employees schema as discussed!
+    // 2. Verify PIN
     if (employee.pinCode !== pin) {
       return { success: false, error: "Invalid PIN code." };
     }
@@ -37,16 +42,20 @@ export async function clockInOrOut(
     // 4. PROCESS TIME IN
     if (type === "IN") {
       if (existingLog) {
+        // Format the existing time in PH timezone for the error message
+        const timeInString = existingLog.timeIn?.toLocaleTimeString("en-US", {
+          timeZone: "Asia/Manila",
+        });
         return {
           success: false,
-          error: `You already clocked in at ${existingLog.timeIn?.toLocaleTimeString()}.`,
+          error: `You already clocked in at ${timeInString}.`,
         };
       }
 
       await db.insert(attendance).values({
         employeeId: employee.id,
         date: today,
-        timeIn: new Date(),
+        timeIn: new Date(), // Postgres handles the raw UTC timestamp fine, we just need the 'date' column to be correct
         status: "PRESENT",
         totalHours: 0,
       });
@@ -71,9 +80,6 @@ export async function clockInOrOut(
       if (diff > 5) diff -= 1;
 
       const finalHours = Math.max(0, parseFloat(diff.toFixed(2)));
-
-      // Determine Status (Late/Undertime vs Present)
-      // Simple rule: < 4 hours is HALF_DAY, otherwise PRESENT (or keep existing status)
       const status = finalHours < 4 ? "HALF_DAY" : existingLog.status;
 
       await db
