@@ -231,3 +231,58 @@ export async function deleteQuestionAction(questionId: string, examId: string) {
     return { success: false, error: "Failed to delete question" };
   }
 }
+
+// --- 6. EDIT QUESTION ---
+const editQuestionSchema = z.object({
+  questionId: z.string(),
+  examId: z.string(),
+  text: z.string().min(1, "Question text required"),
+  imageUrl: z.string().nullable().optional(),
+  points: z.number().min(1).default(1),
+  choices: z
+    .array(
+      z.object({
+        text: z.string().min(1),
+        imageUrl: z.string().nullable().optional(),
+        isCorrect: z.boolean(),
+      }),
+    )
+    .min(2, "Need at least 2 choices"),
+});
+
+export async function editQuestionAction(
+  data: z.infer<typeof editQuestionSchema>,
+) {
+  try {
+    // 1. Update the main question record
+    await db
+      .update(questions)
+      .set({
+        text: data.text,
+        imageUrl: data.imageUrl,
+        points: data.points,
+      })
+      .where(eq(questions.id, data.questionId));
+
+    // 2. Clear out the old choices
+    await db
+      .delete(questionChoices)
+      .where(eq(questionChoices.questionId, data.questionId));
+
+    // 3. Insert the newly edited choices
+    await db.insert(questionChoices).values(
+      data.choices.map((choice) => ({
+        questionId: data.questionId,
+        text: choice.text,
+        imageUrl: choice.imageUrl,
+        isCorrect: choice.isCorrect,
+      })),
+    );
+
+    revalidatePath(`/dashboard/recruitment/exams/${data.examId}`);
+    return { success: true };
+  } catch (error) {
+    console.error("Edit Question Error:", error);
+    return { success: false, error: "Failed to edit question" };
+  }
+}
