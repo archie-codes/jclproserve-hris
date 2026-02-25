@@ -2,7 +2,7 @@
 
 import { db } from "@/src/db";
 import { employees, attendance } from "@/src/db/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, desc } from "drizzle-orm"; // 👇 Added 'desc' here
 import { revalidatePath } from "next/cache";
 
 export async function clockInOrOut(
@@ -10,13 +10,13 @@ export async function clockInOrOut(
   pin: string,
   type: "IN" | "OUT",
 ) {
-  // 👇 FIX 1: Force Philippine Timezone for the "Today" string
+  // Force Philippine Timezone for the "Today" string
   const today = new Intl.DateTimeFormat("en-CA", {
     timeZone: "Asia/Manila",
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
-  }).format(new Date()); // Outputs reliable "YYYY-MM-DD" in PH time
+  }).format(new Date());
 
   try {
     // 1. Find Employee
@@ -31,48 +31,63 @@ export async function clockInOrOut(
       return { success: false, error: "Invalid PIN code." };
     }
 
-    // 3. Find Today's Record
-    const existingLog = await db.query.attendance.findFirst({
+    // 3. Find Today's LATEST Record (✨ Split Shift Upgrade ✨)
+    // By ordering by timeIn descending, we get their most recent punch
+    const latestLog = await db.query.attendance.findFirst({
       where: and(
         eq(attendance.employeeId, employee.id),
         eq(attendance.date, today),
       ),
+      orderBy: [desc(attendance.timeIn)],
     });
 
     // 4. PROCESS TIME IN
     if (type === "IN") {
-      if (existingLog) {
-        // Format the existing time in PH timezone for the error message
-        const timeInString = existingLog.timeIn?.toLocaleTimeString("en-US", {
+      // Block them ONLY if they have an active shift that isn't closed yet
+      if (latestLog && !latestLog.timeOut) {
+        const timeInString = latestLog.timeIn?.toLocaleTimeString("en-US", {
           timeZone: "Asia/Manila",
         });
         return {
           success: false,
-          error: `You already clocked in at ${timeInString}.`,
+          error: `You already clocked in at ${timeInString}. Please clock out first.`,
         };
       }
 
+      // Safe to clock in! (Creates Shift 1, Shift 2, etc.)
       await db.insert(attendance).values({
         employeeId: employee.id,
         date: today,
-        timeIn: new Date(), // Postgres handles the raw UTC timestamp fine, we just need the 'date' column to be correct
+        timeIn: new Date(),
         status: "PRESENT",
         totalHours: 0,
       });
 
       revalidatePath("/dashboard/attendance");
-      return { success: true, message: `Good morning, ${employee.firstName}!` };
+
+      // Dynamic welcome message: if latestLog exists, it means this is a split shift return!
+      const isReturning = !!latestLog;
+      return {
+        success: true,
+        message: isReturning
+          ? `Welcome back, ${employee.firstName}!`
+          : `Good morning, ${employee.firstName}!`,
+      };
     }
 
     // 5. PROCESS TIME OUT
     if (type === "OUT") {
-      if (!existingLog)
+      // If no logs today, or the latest log already has a time out
+      if (!latestLog)
         return { success: false, error: "You haven't clocked in yet today." };
-      if (existingLog.timeOut)
-        return { success: false, error: "You already clocked out." };
+      if (latestLog.timeOut)
+        return {
+          success: false,
+          error: "You already clocked out of your latest shift.",
+        };
 
       // Calculate Hours
-      const start = new Date(existingLog.timeIn!);
+      const start = new Date(latestLog.timeIn!);
       const end = new Date();
       let diff = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
 
@@ -80,7 +95,10 @@ export async function clockInOrOut(
       if (diff > 5) diff -= 1;
 
       const finalHours = Math.max(0, parseFloat(diff.toFixed(2)));
-      const status = finalHours < 4 ? "HALF_DAY" : existingLog.status;
+
+      // Note: If this is a split shift (e.g. 4 hrs + 4 hrs), each individual shift might be < 4.
+      // We'll keep your half day logic local to this specific punch segment.
+      const status = finalHours < 4 ? "HALF_DAY" : latestLog.status;
 
       await db
         .update(attendance)
@@ -89,12 +107,12 @@ export async function clockInOrOut(
           totalHours: finalHours,
           status: status,
         })
-        .where(eq(attendance.id, existingLog.id));
+        .where(eq(attendance.id, latestLog.id));
 
       revalidatePath("/dashboard/attendance");
       return {
         success: true,
-        message: `Goodbye, ${employee.firstName}! See you tomorrow.`,
+        message: `Goodbye, ${employee.firstName}! Shift ended successfully.`,
       };
     }
 
