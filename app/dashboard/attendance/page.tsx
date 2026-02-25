@@ -26,6 +26,8 @@ import {
   Clock,
   CheckCircle2,
   Filter,
+  Split,
+  Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -33,7 +35,6 @@ import {
   saveBulkAttendance,
 } from "@/src/actions/attendance";
 import { Badge } from "@/components/ui/badge";
-import Image from "next/image";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export default function AttendancePage() {
@@ -41,97 +42,124 @@ export default function AttendancePage() {
     new Date().toISOString().split("T")[0],
   );
   const [loading, setLoading] = useState(true);
-
-  // New State for Filtering
   const [statusFilter, setStatusFilter] = useState("ALL");
 
-  // Local state to hold the grid data before saving
   const [entries, setEntries] = useState<
     {
+      rowId: string;
       employeeId: string;
       name: string;
       position: string | null;
       department: string | null;
-      status: string; // Added status here
+      status: string;
       timeIn: string;
       timeOut: string;
       imageUrl: string | null;
+      isSplit?: boolean;
     }[]
   >([]);
 
-  // 1. Fetch Staff List on Mount
   useEffect(() => {
     async function loadStaff() {
       setLoading(true);
       try {
-        // Pass the selectedDate to our new function
         const staff = await getStaffAttendance(selectedDate);
 
-        setEntries(
-          staff.map((s) => {
-            // Get the record if it exists
-            const log = s.attendance[0];
+        const allEntries: any[] = [];
 
-            // Format Date objects back to "HH:mm" strings for the input fields
-            const timeInStr = log?.timeIn
-              ? new Date(log.timeIn).toLocaleTimeString("en-US", {
-                  hour12: false,
-                  hour: "2-digit",
-                  minute: "2-digit",
-                  timeZone: "Asia/Manila",
-                })
-              : "";
-            const timeOutStr = log?.timeOut
-              ? new Date(log.timeOut).toLocaleTimeString("en-US", {
-                  hour12: false,
-                  hour: "2-digit",
-                  minute: "2-digit",
-                  timeZone: "Asia/Manila",
-                })
-              : "";
+        staff.forEach((s) => {
+          if (s.attendance && s.attendance.length > 0) {
+            s.attendance.forEach((log, index) => {
+              allEntries.push(createEntryObject(s, log, index > 0));
+            });
+          } else {
+            allEntries.push(createEntryObject(s, null, false));
+          }
+        });
 
-            return {
-              employeeId: s.id,
-              name: `${s.lastName}, ${s.firstName}`,
-              position: s.position ? s.position.title : "No Position",
-              department: s.department ? s.department.name : "No Dept",
-              status: s.status,
-              timeIn: timeInStr,
-              timeOut: timeOutStr,
-              imageUrl: s.imageUrl,
-            };
-          }),
-        );
+        setEntries(allEntries);
       } catch (err) {
         toast.error("Failed to load staff list");
       } finally {
         setLoading(false);
       }
     }
-
     loadStaff();
   }, [selectedDate]);
 
-  // 2. Handle Individual Input Changes
+  const createEntryObject = (s: any, log: any, isSplit: boolean) => {
+    const timeInStr = log?.timeIn
+      ? new Date(log.timeIn).toLocaleTimeString("en-US", {
+          hour12: false,
+          hour: "2-digit",
+          minute: "2-digit",
+          timeZone: "Asia/Manila",
+        })
+      : "";
+    const timeOutStr = log?.timeOut
+      ? new Date(log.timeOut).toLocaleTimeString("en-US", {
+          hour12: false,
+          hour: "2-digit",
+          minute: "2-digit",
+          timeZone: "Asia/Manila",
+        })
+      : "";
+
+    return {
+      rowId: log?.id || Math.random().toString(36).substr(2, 9),
+      employeeId: s.id,
+      name: `${s.lastName}, ${s.firstName}`,
+      position: s.position ? s.position.title : "No Position",
+      department: s.department ? s.department.name : "No Dept",
+      status: s.status,
+      timeIn: timeInStr,
+      timeOut: timeOutStr,
+      imageUrl: s.imageUrl,
+      isSplit,
+    };
+  };
+
   const handleUpdate = (
-    id: string,
+    rowId: string,
     field: "timeIn" | "timeOut",
     val: string,
   ) => {
     setEntries((prev) =>
-      prev.map((e) => (e.employeeId === id ? { ...e, [field]: val } : e)),
+      prev.map((e) => (e.rowId === rowId ? { ...e, [field]: val } : e)),
     );
   };
 
-  // 3. Quick Action: Apply Standard 8-5 Shift to Empty Fields (Apply only to visible filtered entries)
+  const handleAddSplit = (employeeId: string) => {
+    const original = entries.find((e) => e.employeeId === employeeId);
+    if (!original) return;
+
+    const newRow = {
+      ...original,
+      rowId: Math.random().toString(36).substr(2, 9),
+      timeIn: "",
+      timeOut: "",
+      isSplit: true,
+    };
+
+    setEntries((prev) => {
+      const lastIndex = prev.map((e) => e.employeeId).lastIndexOf(employeeId);
+      const updated = [...prev];
+      updated.splice(lastIndex + 1, 0, newRow);
+      return updated;
+    });
+    toast.success(`Added split shift for ${original.name}`);
+  };
+
+  const handleRemoveRow = (rowId: string) => {
+    setEntries((prev) => prev.filter((e) => e.rowId !== rowId));
+  };
+
   const applyStandardShift = () => {
     setEntries((prev) =>
       prev.map((e) => {
-        // Only apply if it matches current filter (optional logic, but usually preferred)
         const matchesFilter =
           statusFilter === "ALL" || e.status === statusFilter;
-
-        if (matchesFilter) {
+        if (matchesFilter && !e.isSplit) {
           return {
             ...e,
             timeIn: e.timeIn || "08:00",
@@ -141,33 +169,29 @@ export default function AttendancePage() {
         return e;
       }),
     );
-    toast.info("Applied 8:00 AM - 5:00 PM to visible empty fields");
+    toast.info("Standard shift applied to primary rows");
   };
 
-  // 4. Submit to Server
   const handleSave = async () => {
     if (entries.length === 0) return;
+    const toastId = toast.loading("Saving attendance...");
 
-    const toastId = toast.loading("Saving attendance records...");
-
-    // Filter out rows that are completely empty to save bandwidth
     const validEntries = entries.filter((e) => e.timeIn || e.timeOut);
-
-    // @ts-ignore - Ignoring status field for submission as backend might not expect it in payload
-    const submissionData = validEntries.map(({ status, ...rest }) => rest);
+    const submissionData = validEntries.map(
+      ({ status, isSplit, rowId, ...rest }) => rest,
+    );
 
     const result = await saveBulkAttendance(selectedDate, submissionData);
 
     if (result.success) {
-      toast.success(`Successfully saved ${validEntries.length} records!`, {
+      toast.success(`Saved ${validEntries.length} shift records!`, {
         id: toastId,
       });
     } else {
-      toast.error("Error saving records. Please try again.", { id: toastId });
+      toast.error("Error saving records.", { id: toastId });
     }
   };
 
-  // --- FILTERING LOGIC ---
   const filteredEntries = entries.filter((entry) => {
     if (statusFilter === "ALL") return true;
     return entry.status === statusFilter;
@@ -175,20 +199,17 @@ export default function AttendancePage() {
 
   return (
     <div className="space-y-6 p-1 animate-in fade-in duration-500">
-      {/* --- HEADER SECTION --- */}
       <div className="flex flex-col md:flex-row justify-between md:items-end gap-4 border-b pb-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-foreground">
             Attendance Log
           </h1>
-          <p className="text-muted-foreground mt-1">
-            Daily timecard encoding for Utility & Operations personnel.
+          <p className="text-muted-foreground mt-1 text-sm">
+            Encoding for JC&L Proserve Inc. Supports multiple shifts per day.
           </p>
         </div>
 
-        {/* Controls Bar */}
-        <div className="flex flex-wrap items-center gap-3 bg-muted/40 p-2 rounded-xl border border-border/50 shadow-sm">
-          {/* Date Picker */}
+        <div className="flex flex-wrap items-center gap-3 bg-muted/40 p-2 rounded-xl border shadow-sm">
           <div className="flex flex-col gap-1">
             <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider ml-1">
               Log Date
@@ -199,20 +220,17 @@ export default function AttendancePage() {
                 type="date"
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
-                className="pl-9 w-40 bg-background border-input font-medium"
+                className="pl-9 w-40 bg-background font-medium"
               />
             </div>
           </div>
 
-          <div className="h-8 w-px bg-border mx-1 hidden sm:block"></div>
-
-          {/* Status Filter */}
           <div className="flex flex-col gap-1">
             <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider ml-1">
               Filter Status
             </span>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-37.5 bg-background">
+              <SelectTrigger className="w-36 bg-background">
                 <Filter className="mr-2 h-3 w-3" />
                 <SelectValue placeholder="All Status" />
               </SelectTrigger>
@@ -225,149 +243,141 @@ export default function AttendancePage() {
             </Select>
           </div>
 
-          <div className="h-8 w-px bg-border mx-1 hidden sm:block"></div>
-
-          {/* Action Buttons */}
           <Button
             variant="secondary"
             onClick={applyStandardShift}
-            className="h-10 mt-auto shadow-sm border border-border/50"
-            title="Fill 8:00 AM - 5:00 PM"
+            className="h-10 mt-auto border shadow-sm"
           >
-            <Clock className="mr-2 h-4 w-4 text-blue-600" /> Standard Shift
+            <Clock className="mr-2 h-4 w-4 text-blue-600" /> Standard
           </Button>
 
           <Button
             onClick={handleSave}
-            className="h-10 mt-auto bg-indigo-600 hover:bg-indigo-700 text-white shadow-md transition-all active:scale-95"
+            className="h-10 mt-auto bg-indigo-600 hover:bg-indigo-700 text-white shadow-md"
           >
-            <Save className="mr-2 h-4 w-4" /> Save Records
+            <Save className="mr-2 h-4 w-4" /> Save All
           </Button>
         </div>
       </div>
 
-      {/* --- MAIN GRID --- */}
-      <Card className="border-border/60 shadow-sm overflow-hidden bg-card">
-        <CardHeader className="py-3 px-6 bg-muted/30 border-b flex flex-row items-center justify-between">
-          <CardTitle className="text-sm font-semibold flex items-center gap-2 text-muted-foreground uppercase tracking-wider">
-            <Users className="h-4 w-4" /> Staff List
-          </CardTitle>
-          <div className="text-xs text-muted-foreground">
-            Showing: {filteredEntries.length} / {entries.length}
-          </div>
-        </CardHeader>
-
+      <Card className="border-border/60 shadow-sm overflow-hidden">
         <CardContent className="p-0">
           <Table>
             <TableHeader>
-              <TableRow className="hover:bg-transparent bg-muted/10">
-                <TableHead className="w-[40%] pl-6">Employee Details</TableHead>
+              <TableRow className="bg-muted/10">
+                <TableHead className="pl-6">Employee Details</TableHead>
                 <TableHead>Time In</TableHead>
                 <TableHead>Time Out</TableHead>
-                <TableHead className="text-right pr-6">Status</TableHead>
+                <TableHead className="text-right pr-6">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell
-                    colSpan={4}
-                    className="h-32 text-center text-muted-foreground"
-                  >
-                    <div className="flex flex-col items-center gap-2">
-                      <div className="h-6 w-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
-                      <span>Loading staff list...</span>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ) : filteredEntries.length === 0 ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={4}
-                    className="h-32 text-center text-muted-foreground italic"
-                  >
-                    {entries.length === 0
-                      ? 'No employees found in "Utility" or "Operations" departments.'
-                      : `No ${statusFilter.toLowerCase()} employees found.`}
+                  <TableCell colSpan={4} className="h-32 text-center">
+                    Loading...
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredEntries.map((entry) => (
-                  <TableRow
-                    key={entry.employeeId}
-                    className="group hover:bg-muted/30 transition-colors"
-                  >
-                    <TableCell className="pl-6 py-3">
-                      <div className="flex items-center gap-3">
-                        <Avatar className="h-9 w-9">
-                          <AvatarImage
-                            src={entry.imageUrl ?? undefined}
-                            alt={entry.name}
-                          />
-                          <AvatarFallback>
-                            {entry.name?.charAt(0).toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
+                filteredEntries.map((entry, index) => {
+                  const isDuplicateDateRow =
+                    index > 0 &&
+                    filteredEntries[index - 1].employeeId === entry.employeeId;
 
-                        <div className="flex flex-col">
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium text-foreground">
-                              {entry.name}
-                            </span>
-                            <Badge
-                              variant="outline"
-                              className="text-[10px] h-5 px-1 bg-muted/50"
+                  return (
+                    <TableRow
+                      key={entry.rowId}
+                      className={`group transition-colors ${entry.isSplit ? "bg-indigo-50/30 dark:bg-indigo-900/10 border-t-0" : ""}`}
+                    >
+                      <TableCell className="pl-6 py-3">
+                        <div className="flex items-center gap-3">
+                          {/* 👇 The new Tree Branch Visual */}
+                          {isDuplicateDateRow ? (
+                            <div className="relative h-8 w-8 flex items-center justify-center opacity-70">
+                              {/* Vertical Line going up */}
+                              <div className="absolute left-1/2 top-0 bottom-1/2 w-[2px] bg-indigo-300 dark:bg-indigo-800 rounded-t-sm"></div>
+                              {/* Horizontal Line pointing right */}
+                              <div className="absolute left-1/2 top-1/2 right-0 h-[2px] bg-indigo-300 dark:bg-indigo-800 rounded-r-sm"></div>
+                            </div>
+                          ) : (
+                            <Avatar className="h-8 w-8 shadow-sm">
+                              <AvatarImage src={entry.imageUrl ?? undefined} />
+                              <AvatarFallback>
+                                {entry.name?.charAt(0)}
+                              </AvatarFallback>
+                            </Avatar>
+                          )}
+
+                          <div className="flex flex-col">
+                            <span
+                              className={`font-semibold text-sm ${isDuplicateDateRow ? "italic text-indigo-600/70 dark:text-indigo-400/70" : ""}`}
                             >
-                              {entry.status}
-                            </Badge>
+                              {isDuplicateDateRow
+                                ? "Split Schedule"
+                                : entry.name}
+                            </span>
+
+                            {/* Hide the position for the duplicate row so it looks cleaner */}
+                            {!isDuplicateDateRow && (
+                              <span className="text-[10px] text-muted-foreground uppercase tracking-tight">
+                                {entry.position}
+                              </span>
+                            )}
                           </div>
-                          <span className="text-xs text-muted-foreground">
-                            {entry.position || "Staff"}
-                          </span>
                         </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Input
-                        type="time"
-                        value={entry.timeIn}
-                        onChange={(e) =>
-                          handleUpdate(
-                            entry.employeeId,
-                            "timeIn",
-                            e.target.value,
-                          )
-                        }
-                        className="w-36 font-mono text-sm bg-background/50 focus:bg-background transition-colors"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Input
-                        type="time"
-                        value={entry.timeOut}
-                        onChange={(e) =>
-                          handleUpdate(
-                            entry.employeeId,
-                            "timeOut",
-                            e.target.value,
-                          )
-                        }
-                        className="w-36 font-mono text-sm bg-background/50 focus:bg-background transition-colors"
-                      />
-                    </TableCell>
-                    <TableCell className="text-right pr-6">
-                      {entry.timeIn && entry.timeOut ? (
-                        <div className="inline-flex items-center gap-1 text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-1 rounded-full text-xs font-medium">
-                          <CheckCircle2 className="h-3 w-3" /> Complete
+                      </TableCell>
+
+                      <TableCell>
+                        <Input
+                          type="time"
+                          value={entry.timeIn}
+                          onChange={(e) =>
+                            handleUpdate(entry.rowId, "timeIn", e.target.value)
+                          }
+                          className="w-32 font-mono text-xs bg-background"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          type="time"
+                          value={entry.timeOut}
+                          onChange={(e) =>
+                            handleUpdate(entry.rowId, "timeOut", e.target.value)
+                          }
+                          className="w-32 font-mono text-xs bg-background"
+                        />
+                      </TableCell>
+                      <TableCell className="text-right pr-6">
+                        <div className="flex justify-end gap-1">
+                          {entry.isSplit ? (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleRemoveRow(entry.rowId)}
+                              className="h-8 w-8 p-0 text-red-500 hover:text-red-600 hover:bg-red-50"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          ) : (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleAddSplit(entry.employeeId)}
+                              className="h-8 text-[10px] font-bold uppercase tracking-tighter"
+                            >
+                              <Split className="mr-1 h-3 w-3" /> Split Schedule
+                            </Button>
+                          )}
+                          {entry.timeIn && entry.timeOut && (
+                            <div className="ml-2 flex items-center text-emerald-600">
+                              <CheckCircle2 className="h-4 w-4" />
+                            </div>
+                          )}
                         </div>
-                      ) : (
-                        <span className="text-muted-foreground/40 text-xs">
-                          —
-                        </span>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
               )}
             </TableBody>
           </Table>

@@ -268,6 +268,7 @@ import {
   time,
   bigint,
   doublePrecision,
+  real,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
@@ -508,6 +509,7 @@ export const attendance = pgTable(
     undertimeMinutes: integer("undertime_minutes").default(0),
     overtimeMinutes: integer("overtime_minutes").default(0),
     ndHours: integer("nd_hours").default(0), // Night Differential
+    overtimePay: doublePrecision("overtime_pay").default(0),
 
     status: varchar("status", { length: 20 }).default("PRESENT"), // PRESENT, ABSENT, LEAVE
     createdAt: timestamp("created_at").defaultNow(),
@@ -564,6 +566,7 @@ export const payslips = pgTable("payslips", {
   // Earnings
   basicSalary: doublePrecision("basic_salary").default(0),
   daysWorked: doublePrecision("days_worked").default(0),
+  overtimePay: real("overtime_pay").default(0),
   grossIncome: doublePrecision("gross_income").default(0),
 
   // Deductions

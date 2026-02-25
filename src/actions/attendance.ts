@@ -5,9 +5,12 @@ import { attendance, employees } from "@/src/db/schema";
 import { eq, and, asc, inArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
+/**
+ * Fetches all staff and their attendance logs for a specific date.
+ * Updated to support multiple shifts per employee.
+ */
 export async function getStaffAttendance(dateStr: string) {
   try {
-    // 1. Fetch active employees
     const staff = await db.query.employees.findMany({
       where: inArray(employees.status, [
         "REGULAR",
@@ -18,10 +21,10 @@ export async function getStaffAttendance(dateStr: string) {
       with: {
         department: true,
         position: true,
-        // 👇 Fetch their attendance specifically for the selected date!
+        // 👇 REMOVED limit: 1 to allow split shifts (multiple records)
         attendance: {
           where: eq(attendance.date, dateStr),
-          limit: 1,
+          orderBy: [asc(attendance.timeIn)], // Keep shifts in chronological order
         },
       },
     });
@@ -35,86 +38,116 @@ export async function getStaffAttendance(dateStr: string) {
 
 type AttendanceRecord = {
   employeeId: string;
-  timeIn: string; // Format: "08:00"
-  timeOut: string; // Format: "17:00"
+  timeIn: string; // Format: "HH:mm"
+  timeOut: string; // Format: "HH:mm"
 };
 
+/**
+ * Saves all attendance records from the grid.
+ * Handles split shifts by clearing existing logs for the edited employees
+ * and re-inserting the current state of the UI grid.
+ */
 export async function saveBulkAttendance(
   dateStr: string,
   records: AttendanceRecord[],
 ) {
   try {
-    const operations = records.map(async (record) => {
-      // 1. Skip rows that have no time data to avoid cluttering DB
-      if (!record.timeIn && !record.timeOut) return;
+    // 1. Identify which employees are being updated in this batch
+    const employeeIds = Array.from(new Set(records.map((r) => r.employeeId)));
+    if (employeeIds.length === 0) return { success: true };
 
-      // 2. Combine Date + Time into a full Timestamp Object
-      const timeInDate = record.timeIn
-        ? new Date(`${dateStr}T${record.timeIn}:00+08:00`)
-        : null;
-      const timeOutDate = record.timeOut
-        ? new Date(`${dateStr}T${record.timeOut}:00+08:00`)
-        : null;
+    // 2. Clear existing records sequentially (Neon HTTP friendly)
+    // Step A: Delete all existing logs for these specific employees on this date
+    await db
+      .delete(attendance)
+      .where(
+        and(
+          eq(attendance.date, dateStr),
+          inArray(attendance.employeeId, employeeIds),
+        ),
+      );
 
-      // 👇 FIX: Calculate the total hours worked (with Night Shift support!)
-      let calculatedHours = 0;
-      if (timeInDate && timeOutDate) {
-        // Get the difference in milliseconds
+    // Step B: Prepare the new records for insertion
+    const recordsToInsert = records
+      .filter((r) => r.timeIn && r.timeOut)
+      .map((record) => {
+        const timeInDate = new Date(`${dateStr}T${record.timeIn}:00+08:00`);
+        const timeOutDate = new Date(`${dateStr}T${record.timeOut}:00+08:00`);
+
         let diffInMs = timeOutDate.getTime() - timeInDate.getTime();
-
-        // 🔥 THE NIGHT SHIFT FIX:
-        // If diffInMs is negative, they crossed midnight. Add 24 hours (in ms).
         if (diffInMs < 0) {
           diffInMs += 24 * 60 * 60 * 1000;
         }
 
-        // Convert milliseconds to hours (1000ms * 60s * 60m)
         let rawHours = diffInMs / (1000 * 60 * 60);
-
-        // Optional: If you want to automatically deduct 1 hour for lunch
-        // when they work a full 9-hour shift
         if (rawHours >= 9) {
           rawHours -= 1;
         }
 
-        // Round to 2 decimal places (e.g., 8.00)
-        calculatedHours = parseFloat(rawHours.toFixed(2));
-      }
+        const totalHours = parseFloat(rawHours.toFixed(2));
+        const overtimeMinutes =
+          totalHours > 8 ? Math.round((totalHours - 8) * 60) : 0;
 
-      // 3. Check if a record already exists for this person on this specific date
-      const existing = await db.query.attendance.findFirst({
-        where: and(
-          eq(attendance.employeeId, record.employeeId),
-          eq(attendance.date, dateStr),
-        ),
-      });
-
-      // 4. Update if exists, Insert if new
-      if (existing) {
-        return db
-          .update(attendance)
-          .set({
-            timeIn: timeInDate,
-            timeOut: timeOutDate,
-            totalHours: calculatedHours,
-          })
-          .where(eq(attendance.id, existing.id));
-      } else {
-        return db.insert(attendance).values({
+        return {
           employeeId: record.employeeId,
           date: dateStr,
           timeIn: timeInDate,
           timeOut: timeOutDate,
-          totalHours: calculatedHours,
-        });
-      }
-    });
+          totalHours: totalHours,
+          overtimeMinutes: overtimeMinutes,
+          status: "PRESENT",
+        };
+      });
 
-    await Promise.all(operations);
+    // Step C: Insert the new rows
+    if (recordsToInsert.length > 0) {
+      await db.insert(attendance).values(recordsToInsert);
+    }
+
     revalidatePath("/dashboard/attendance");
     return { success: true };
   } catch (error) {
     console.error("Attendance Save Error:", error);
     return { success: false, error: "Failed to save records." };
+  }
+}
+
+/**
+ * Handles manual entry via the Modal.
+ * This uses a simple Insert, as the modal is usually for adding single missing logs.
+ */
+export async function addManualTimeLogAction(formData: FormData) {
+  try {
+    const employeeId = formData.get("employeeId") as string;
+    const date = formData.get("date") as string;
+    const timeInStr = formData.get("timeIn") as string;
+    const timeOutStr = formData.get("timeOut") as string;
+
+    if (!employeeId || !date || !timeInStr || !timeOutStr) {
+      return { success: false, error: "All fields are required." };
+    }
+
+    const timeIn = new Date(`${date}T${timeInStr}:00+08:00`);
+    const timeOut = new Date(`${date}T${timeOutStr}:00+08:00`);
+
+    let diffMs = timeOut.getTime() - timeIn.getTime();
+    if (diffMs < 0) diffMs += 24 * 60 * 60 * 1000;
+
+    const totalHours = diffMs / (1000 * 60 * 60);
+
+    await db.insert(attendance).values({
+      employeeId,
+      date,
+      timeIn,
+      timeOut,
+      totalHours: parseFloat(totalHours.toFixed(2)),
+      status: "PRESENT",
+    });
+
+    revalidatePath("/dashboard/attendance");
+    return { success: true, message: "Manual time log added successfully!" };
+  } catch (error) {
+    console.error("Manual Log Error:", error);
+    return { success: false, error: "Failed to save time log." };
   }
 }
