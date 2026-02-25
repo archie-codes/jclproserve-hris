@@ -43,18 +43,29 @@ export async function clockInOrOut(
 
     // 4. PROCESS TIME IN
     if (type === "IN") {
-      // Block them ONLY if they have an active shift that isn't closed yet
-      if (latestLog && !latestLog.timeOut) {
-        const timeInString = latestLog.timeIn?.toLocaleTimeString("en-US", {
-          timeZone: "Asia/Manila",
-        });
-        return {
-          success: false,
-          error: `You already clocked in at ${timeInString}. Please clock out first.`,
-        };
+      if (latestLog) {
+        // Condition A: They are currently clocked in and forgot to clock out
+        if (!latestLog.timeOut) {
+          const timeInString = latestLog.timeIn?.toLocaleTimeString("en-US", {
+            timeZone: "Asia/Manila",
+          });
+          return {
+            success: false,
+            error: `You already clocked in at ${timeInString}. Please clock out first.`,
+          };
+        }
+
+        // Condition B: They ALREADY completed a shift today (TimeOut exists)
+        // 👇 This prevents the automatic creation of a split schedule!
+        if (latestLog.timeOut) {
+          return {
+            success: false,
+            error: "You have already completed your shift for today.",
+          };
+        }
       }
 
-      // Safe to clock in! (Creates Shift 1, Shift 2, etc.)
+      // Safe to clock in! (Creates their FIRST and ONLY shift of the day)
       await db.insert(attendance).values({
         employeeId: employee.id,
         date: today,
@@ -64,14 +75,9 @@ export async function clockInOrOut(
       });
 
       revalidatePath("/dashboard/attendance");
-
-      // Dynamic welcome message: if latestLog exists, it means this is a split shift return!
-      const isReturning = !!latestLog;
       return {
         success: true,
-        message: isReturning
-          ? `Welcome back, ${employee.firstName}!`
-          : `Good morning, ${employee.firstName}!`,
+        message: `Good morning, ${employee.firstName}!`,
       };
     }
 
