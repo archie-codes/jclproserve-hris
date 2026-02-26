@@ -19,6 +19,7 @@ import {
   Loader2,
   UserRound,
   LockKeyhole,
+  CheckCircle2, // 👇 Added for the success overlay
 } from "lucide-react";
 import { clockInOrOut } from "@/src/actions/clock-in";
 
@@ -27,6 +28,12 @@ export default function AttendanceKioskPage() {
   const [pin, setPin] = useState("");
   const [loading, setLoading] = useState(false);
   const [time, setTime] = useState<Date | null>(null);
+
+  // ✨ NEW: State for the Success Overlay
+  const [successData, setSuccessData] = useState<{
+    message: string;
+    type: "IN" | "OUT";
+  } | null>(null);
 
   // Digital Clock Logic
   useEffect(() => {
@@ -45,18 +52,19 @@ export default function AttendanceKioskPage() {
     const res = await clockInOrOut(empId, pin, type);
 
     if (res.success) {
-      toast.success(res.message, {
-        duration: 5000, // Show longer so they see it
-        style: {
-          background: type === "IN" ? "#10b981" : "#f59e0b",
-          color: "white",
-          border: "none",
-        },
-      });
-      // Clear form
+      // 1. Show the giant overlay instead of a toast
+      setSuccessData({ message: res.message || "Success", type });
+
+      // 2. Clear form instantly so it's ready in the background
       setEmpId("");
       setPin("");
+
+      // 3. Auto-hide the overlay after exactly 2 seconds
+      setTimeout(() => {
+        setSuccessData(null);
+      }, 2000);
     } else {
+      // Still use toasts for errors, so they can re-type their pin
       toast.error(res.error);
     }
     setLoading(false);
@@ -91,7 +99,26 @@ export default function AttendanceKioskPage() {
       </div>
 
       {/* 2. LOGIN CARD */}
-      <Card className="w-full max-w-md bg-slate-900/80 backdrop-blur-md border-slate-800 shadow-2xl ring-1 ring-white/10">
+      <Card className="w-full max-w-md bg-slate-900/80 backdrop-blur-md border-slate-800 shadow-2xl ring-1 ring-white/10 relative overflow-hidden">
+        {/* ✨ THE FAST SUCCESS OVERLAY ✨ */}
+        {successData && (
+          <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-slate-900/95 backdrop-blur-md animate-in fade-in zoom-in-95 duration-200">
+            <div
+              className={`p-5 rounded-full mb-6 shadow-2xl ${successData.type === "IN" ? "bg-emerald-500/20 text-emerald-400 shadow-emerald-500/20" : "bg-amber-500/20 text-amber-400 shadow-amber-500/20"}`}
+            >
+              <CheckCircle2 className="h-20 w-20 animate-in slide-in-from-bottom-4 duration-500" />
+            </div>
+            <h2 className="text-2xl font-bold text-white tracking-tight text-center px-6 leading-tight">
+              {successData.message}
+            </h2>
+            <p className="text-slate-400 mt-3 text-sm font-medium uppercase tracking-widest">
+              {successData.type === "IN"
+                ? "Time In Recorded"
+                : "Time Out Recorded"}
+            </p>
+          </div>
+        )}
+
         <CardHeader className="text-center pb-2 pt-8">
           <CardTitle className="text-2xl text-white font-bold tracking-tight">
             Daily Time Record
@@ -115,6 +142,7 @@ export default function AttendanceKioskPage() {
                   value={empId}
                   onChange={(e) => setEmpId(e.target.value.toUpperCase())}
                   className="pl-12 bg-slate-950 border-slate-800 text-white placeholder:text-slate-700 focus:border-indigo-500 focus:ring-indigo-500/20 h-12 text-lg font-medium transition-all"
+                  disabled={loading || !!successData}
                 />
               </div>
             </div>
@@ -132,6 +160,7 @@ export default function AttendanceKioskPage() {
                   onChange={(e) => setPin(e.target.value)}
                   className="pl-12 bg-slate-950 border-slate-800 text-white placeholder:text-slate-700 focus:border-indigo-500 focus:ring-indigo-500/20 h-12 text-lg font-medium tracking-widest transition-all"
                   maxLength={6}
+                  disabled={loading || !!successData}
                 />
               </div>
             </div>
@@ -143,9 +172,9 @@ export default function AttendanceKioskPage() {
               size="lg"
               className="bg-emerald-600 hover:bg-emerald-500 text-white h-16 text-lg font-bold shadow-lg shadow-emerald-900/20 transition-all"
               onClick={() => handleSubmit("IN")}
-              disabled={loading}
+              disabled={loading || !!successData}
             >
-              {loading ? (
+              {loading && successData?.type !== "IN" ? (
                 <Loader2 className="animate-spin" />
               ) : (
                 <>
@@ -158,9 +187,9 @@ export default function AttendanceKioskPage() {
               size="lg"
               className="bg-amber-600 hover:bg-amber-500 text-white h-16 text-lg font-bold shadow-lg shadow-amber-900/20 transition-all"
               onClick={() => handleSubmit("OUT")}
-              disabled={loading}
+              disabled={loading || !!successData}
             >
-              {loading ? (
+              {loading && successData?.type !== "OUT" ? (
                 <Loader2 className="animate-spin" />
               ) : (
                 <>
