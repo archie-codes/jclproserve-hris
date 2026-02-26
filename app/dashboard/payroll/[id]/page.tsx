@@ -15,8 +15,8 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { EditAdjustmentModal } from "@/components/dashboard/payroll/edit-adjustment-modal";
-import Link from "next/link"; // 👇 Imported Link
-import { ChevronLeft } from "lucide-react"; // 👇 Imported ChevronLeft icon
+import Link from "next/link";
+import { ChevronLeft } from "lucide-react";
 
 function formatDaysWorked(decimalDays: number) {
   if (Number.isInteger(decimalDays)) {
@@ -84,7 +84,6 @@ export default async function PayrollDetailsPage({
 
   if (positionFilter) {
     filteredSlips = filteredSlips.filter((slip) => {
-      // 👇 Fixed: Now only uses .title
       const posName = slip.employee.position?.title || "";
       return posName.toLowerCase().includes(positionFilter);
     });
@@ -100,7 +99,7 @@ export default async function PayrollDetailsPage({
 
   return (
     <div className="p-1 animate-in fade-in duration-500">
-      {/* 👇 NEW: Back Button */}
+      {/* Back Button */}
       <Link
         href="/dashboard/payroll"
         className="inline-flex items-center text-sm font-medium text-muted-foreground hover:text-indigo-600 transition-colors mb-4"
@@ -165,14 +164,34 @@ export default async function PayrollDetailsPage({
                           </AvatarFallback>
                         </Avatar>
                         <div>
-                          <p className="font-medium">
+                          <p className="font-medium text-slate-900 dark:text-slate-100">
                             {slip.employee.lastName}, {slip.employee.firstName}
                           </p>
-                          <p className="text-[10px] text-muted-foreground uppercase">
-                            {/* 👇 Fixed: Now only uses .title */}
-                            {slip.employee.employeeNo} •{" "}
-                            {slip.employee.position?.title || "Unassigned"}
-                          </p>
+
+                          {/* 👇 THE NEW BADGES SECTION */}
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <span className="text-[10px] text-muted-foreground uppercase">
+                              {slip.employee.employeeNo} •{" "}
+                              {slip.employee.position?.title || "Unassigned"}
+                            </span>
+
+                            {slip.employee.salaryType === "DAILY" ? (
+                              <Badge
+                                variant="outline"
+                                className="h-[18px] px-1.5 text-[9px] font-bold tracking-wider bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800"
+                              >
+                                DAILY
+                              </Badge>
+                            ) : (
+                              <Badge
+                                variant="outline"
+                                className="h-[18px] px-1.5 text-[9px] font-bold tracking-wider bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-400 dark:border-purple-800"
+                              >
+                                FIXED
+                              </Badge>
+                            )}
+                          </div>
+                          {/* 👆 END BADGES SECTION */}
                         </div>
                       </div>
                     </TableCell>

@@ -11,7 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { toast } from "sonner";
+import { toast } from "sonner"; // Kept just in case you need it for fatal system errors
 import {
   Clock,
   LogIn,
@@ -19,7 +19,8 @@ import {
   Loader2,
   UserRound,
   LockKeyhole,
-  CheckCircle2, // 👇 Added for the success overlay
+  CheckCircle2,
+  XCircle, // 👇 Added for the Error Overlay
 } from "lucide-react";
 import { clockInOrOut } from "@/src/actions/clock-in";
 
@@ -29,11 +30,14 @@ export default function AttendanceKioskPage() {
   const [loading, setLoading] = useState(false);
   const [time, setTime] = useState<Date | null>(null);
 
-  // ✨ NEW: State for the Success Overlay
+  // State for the Success Overlay
   const [successData, setSuccessData] = useState<{
     message: string;
     type: "IN" | "OUT";
   } | null>(null);
+
+  // ✨ NEW: State for the Error Overlay
+  const [errorData, setErrorData] = useState<string | null>(null);
 
   // Digital Clock Logic
   useEffect(() => {
@@ -44,7 +48,8 @@ export default function AttendanceKioskPage() {
 
   const handleSubmit = async (type: "IN" | "OUT") => {
     if (!empId || !pin) {
-      toast.error("Please enter your Employee ID and PIN");
+      setErrorData("Please enter your Employee ID and PIN");
+      setTimeout(() => setErrorData(null), 3000);
       return;
     }
 
@@ -52,25 +57,31 @@ export default function AttendanceKioskPage() {
     const res = await clockInOrOut(empId, pin, type);
 
     if (res.success) {
-      // 1. Show the giant overlay instead of a toast
+      // Show Success Overlay
       setSuccessData({ message: res.message || "Success", type });
-
-      // 2. Clear form instantly so it's ready in the background
       setEmpId("");
       setPin("");
 
-      // 3. Auto-hide the overlay after exactly 2 seconds
       setTimeout(() => {
         setSuccessData(null);
       }, 2000);
     } else {
-      // Still use toasts for errors, so they can re-type their pin
-      toast.error(res.error);
+      // 👇 Show the giant Error Overlay instead of a tiny toast!
+      setErrorData(res.error || "An unknown error occurred. Please try again.");
+      setEmpId(""); // Clear the form so the next person can try
+      setPin("");
+
+      // Let the error show for 3.5 seconds so they have time to read it
+      setTimeout(() => {
+        setErrorData(null);
+      }, 3500);
     }
     setLoading(false);
   };
 
   if (!time) return null; // Prevent hydration mismatch
+
+  const isLocked = loading || !!successData || !!errorData;
 
   return (
     <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4 selection:bg-indigo-500/30">
@@ -104,7 +115,11 @@ export default function AttendanceKioskPage() {
         {successData && (
           <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-slate-900/95 backdrop-blur-md animate-in fade-in zoom-in-95 duration-200">
             <div
-              className={`p-5 rounded-full mb-6 shadow-2xl ${successData.type === "IN" ? "bg-emerald-500/20 text-emerald-400 shadow-emerald-500/20" : "bg-amber-500/20 text-amber-400 shadow-amber-500/20"}`}
+              className={`p-5 rounded-full mb-6 shadow-2xl ${
+                successData.type === "IN"
+                  ? "bg-emerald-500/20 text-emerald-400 shadow-emerald-500/20"
+                  : "bg-amber-500/20 text-amber-400 shadow-amber-500/20"
+              }`}
             >
               <CheckCircle2 className="h-20 w-20 animate-in slide-in-from-bottom-4 duration-500" />
             </div>
@@ -115,6 +130,21 @@ export default function AttendanceKioskPage() {
               {successData.type === "IN"
                 ? "Time In Recorded"
                 : "Time Out Recorded"}
+            </p>
+          </div>
+        )}
+
+        {/* 🚨 THE NEW ERROR OVERLAY 🚨 */}
+        {errorData && (
+          <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-slate-900/95 backdrop-blur-md animate-in fade-in zoom-in-95 duration-200">
+            <div className="p-5 rounded-full mb-6 shadow-2xl bg-red-500/20 text-red-500 shadow-red-500/20">
+              <XCircle className="h-20 w-20 animate-in slide-in-from-bottom-4 duration-500" />
+            </div>
+            <h2 className="text-2xl font-bold text-white tracking-tight text-center px-6 leading-tight">
+              Action Denied
+            </h2>
+            <p className="text-slate-300 mt-3 text-sm font-medium text-center px-8 leading-relaxed">
+              {errorData}
             </p>
           </div>
         )}
@@ -142,7 +172,7 @@ export default function AttendanceKioskPage() {
                   value={empId}
                   onChange={(e) => setEmpId(e.target.value.toUpperCase())}
                   className="pl-12 bg-slate-950 border-slate-800 text-white placeholder:text-slate-700 focus:border-indigo-500 focus:ring-indigo-500/20 h-12 text-lg font-medium transition-all"
-                  disabled={loading || !!successData}
+                  disabled={isLocked}
                 />
               </div>
             </div>
@@ -160,7 +190,7 @@ export default function AttendanceKioskPage() {
                   onChange={(e) => setPin(e.target.value)}
                   className="pl-12 bg-slate-950 border-slate-800 text-white placeholder:text-slate-700 focus:border-indigo-500 focus:ring-indigo-500/20 h-12 text-lg font-medium tracking-widest transition-all"
                   maxLength={6}
-                  disabled={loading || !!successData}
+                  disabled={isLocked}
                 />
               </div>
             </div>
@@ -172,7 +202,7 @@ export default function AttendanceKioskPage() {
               size="lg"
               className="bg-emerald-600 hover:bg-emerald-500 text-white h-16 text-lg font-bold shadow-lg shadow-emerald-900/20 transition-all"
               onClick={() => handleSubmit("IN")}
-              disabled={loading || !!successData}
+              disabled={isLocked}
             >
               {loading && successData?.type !== "IN" ? (
                 <Loader2 className="animate-spin" />
@@ -187,7 +217,7 @@ export default function AttendanceKioskPage() {
               size="lg"
               className="bg-amber-600 hover:bg-amber-500 text-white h-16 text-lg font-bold shadow-lg shadow-amber-900/20 transition-all"
               onClick={() => handleSubmit("OUT")}
-              disabled={loading || !!successData}
+              disabled={isLocked}
             >
               {loading && successData?.type !== "OUT" ? (
                 <Loader2 className="animate-spin" />

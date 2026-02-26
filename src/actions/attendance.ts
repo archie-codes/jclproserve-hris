@@ -21,7 +21,6 @@ export async function getStaffAttendance(dateStr: string) {
       with: {
         department: true,
         position: true,
-        // 👇 REMOVED limit: 1 to allow split shifts (multiple records)
         attendance: {
           where: eq(attendance.date, dateStr),
           orderBy: [asc(attendance.timeIn)], // Keep shifts in chronological order
@@ -56,7 +55,7 @@ export async function saveBulkAttendance(
     const employeeIds = Array.from(new Set(records.map((r) => r.employeeId)));
     if (employeeIds.length === 0) return { success: true };
 
-    // 2. Clear existing records sequentially (Neon HTTP friendly)
+    // 2. Clear existing records sequentially
     // Step A: Delete all existing logs for these specific employees on this date
     await db
       .delete(attendance)
@@ -69,24 +68,41 @@ export async function saveBulkAttendance(
 
     // Step B: Prepare the new records for insertion
     const recordsToInsert = records
-      .filter((r) => r.timeIn && r.timeOut)
+      // 👇 FIX 1: Changed && to || so it keeps active shifts (Time In only)
+      .filter((r) => r.timeIn || r.timeOut)
       .map((record) => {
-        const timeInDate = new Date(`${dateStr}T${record.timeIn}:00+08:00`);
-        const timeOutDate = new Date(`${dateStr}T${record.timeOut}:00+08:00`);
+        let timeInDate = null;
+        let timeOutDate = null;
+        let totalHours = 0;
+        let overtimeMinutes = 0;
 
-        let diffInMs = timeOutDate.getTime() - timeInDate.getTime();
-        if (diffInMs < 0) {
-          diffInMs += 24 * 60 * 60 * 1000;
+        // Safely parse dates if they exist
+        if (record.timeIn) {
+          timeInDate = new Date(`${dateStr}T${record.timeIn}:00+08:00`);
+        }
+        if (record.timeOut) {
+          timeOutDate = new Date(`${dateStr}T${record.timeOut}:00+08:00`);
         }
 
-        let rawHours = diffInMs / (1000 * 60 * 60);
-        if (rawHours >= 9) {
-          rawHours -= 1;
-        }
+        // 👇 FIX 2: Only do the math if BOTH times exist
+        if (timeInDate && timeOutDate) {
+          let diffInMs = timeOutDate.getTime() - timeInDate.getTime();
+          // Handle graveyard shift (crossing midnight)
+          if (diffInMs < 0) {
+            diffInMs += 24 * 60 * 60 * 1000;
+          }
 
-        const totalHours = parseFloat(rawHours.toFixed(2));
-        const overtimeMinutes =
-          totalHours > 8 ? Math.round((totalHours - 8) * 60) : 0;
+          let rawHours = diffInMs / (1000 * 60 * 60);
+
+          // Lunch deduction rule
+          if (rawHours >= 9) {
+            rawHours -= 1;
+          }
+
+          totalHours = parseFloat(rawHours.toFixed(2));
+          overtimeMinutes =
+            totalHours > 8 ? Math.round((totalHours - 8) * 60) : 0;
+        }
 
         return {
           employeeId: record.employeeId,

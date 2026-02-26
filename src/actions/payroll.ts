@@ -23,149 +23,6 @@ export async function getPayrollPeriods() {
   }
 }
 
-// export async function generatePayslipsAction(periodId: string) {
-//   try {
-//     // 1. Fetch current HR Settings (Rates)
-//     const settings = await db.query.payrollSettings.findFirst();
-
-//     // Fallback to standard rates if settings haven't been configured yet
-//     const sssRate = settings?.sssRate ?? 0.045; // 4.5%
-//     const phRate = settings?.philhealthRate ?? 0.025; // 2.5%
-//     const pagibigFixed = settings?.pagibigAmount ?? 200;
-
-//     // 2. Fetch the specific Payroll Period
-//     const period = await db.query.payrollPeriods.findFirst({
-//       where: eq(payrollPeriods.id, periodId),
-//     });
-
-//     if (!period) throw new Error("Payroll period not found");
-
-//     // 3. Fetch all Active Employees
-//     const allStaff = await db.query.employees.findMany({
-//       where: inArray(employees.status, [
-//         "REGULAR",
-//         "PROBATIONARY",
-//         "CONTRACTUAL",
-//         "PROJECT_BASED",
-//         "ACTIVE",
-//       ]),
-//     });
-
-//     let grandTotalPayout = 0;
-
-//     // 4. Loop through every employee and calculate their pay
-//     const operations = allStaff.map(async (emp) => {
-//       const logs = await db.query.attendance.findMany({
-//         where: and(
-//           eq(attendance.employeeId, emp.id),
-//           gte(attendance.date, period.startDate),
-//           lte(attendance.date, period.endDate),
-//         ),
-//       });
-
-//       const totalHours = logs.reduce(
-//         (sum, log) => sum + (log.totalHours || 0),
-//         0,
-//       );
-//       const daysWorked = parseFloat((totalHours / 8).toFixed(2));
-
-//       // Get Monthly Salary (Converted from Centavos in DB to standard Pesos)
-//       const monthlySalary = Number(emp.basicSalary || 0) / 100;
-//       const dailyRate = monthlySalary / 22;
-//       const grossIncome = parseFloat((daysWorked * dailyRate).toFixed(2));
-
-//       // Calculate Deductions using the dynamic settings
-//       let sss = 0;
-//       let philhealth = 0;
-//       let pagibig = 0;
-
-//       if (grossIncome > 0) {
-//         // Apply dynamic rates from database
-//         sss = parseFloat((monthlySalary * sssRate).toFixed(2));
-//         if (sss > 1350) sss = 1350; // SSS Cap example
-
-//         philhealth = parseFloat((monthlySalary * phRate).toFixed(2));
-//         if (philhealth > 2500) philhealth = 2500; // PhilHealth Cap example
-
-//         // Pag-IBIG standard logic: 100 for low earners, fixed amount for others
-//         pagibig = monthlySalary >= 1500 ? pagibigFixed : 100;
-//       }
-
-//       const totalDeductions = parseFloat(
-//         (sss + philhealth + pagibig).toFixed(2),
-//       );
-//       const netPay = parseFloat((grossIncome - totalDeductions).toFixed(2));
-
-//       if (daysWorked > 0 || netPay > 0) {
-//         grandTotalPayout += netPay;
-
-//         const existingSlip = await db.query.payslips.findFirst({
-//           where: and(
-//             eq(payslips.payrollPeriodId, periodId),
-//             eq(payslips.employeeId, emp.id),
-//           ),
-//         });
-
-//         const slipData = {
-//           payrollPeriodId: periodId,
-//           employeeId: emp.id,
-//           daysWorked,
-//           grossIncome,
-//           sss,
-//           philhealth,
-//           pagibig,
-//           // 👇 Keep manual notes/deductions
-//           otherDeductions: existingSlip?.otherDeductions ?? 0,
-//           notes: existingSlip?.notes ?? "",
-//           // 👇 Deductions total includes manual adjustments
-//           totalDeductions: parseFloat(
-//             (
-//               sss +
-//               philhealth +
-//               pagibig +
-//               (existingSlip?.otherDeductions ?? 0)
-//             ).toFixed(2),
-//           ),
-//           netPay: parseFloat(
-//             (
-//               grossIncome -
-//               (sss +
-//                 philhealth +
-//                 pagibig +
-//                 (existingSlip?.otherDeductions ?? 0))
-//             ).toFixed(2),
-//           ),
-//         };
-
-//         if (existingSlip) {
-//           return db
-//             .update(payslips)
-//             .set(slipData)
-//             .where(eq(payslips.id, existingSlip.id));
-//         } else {
-//           return db.insert(payslips).values(slipData);
-//         }
-//       }
-//     });
-
-//     await Promise.all(operations);
-
-//     // Update the total amount for the Payroll Period
-//     await db
-//       .update(payrollPeriods)
-//       .set({ totalAmount: parseFloat(grandTotalPayout.toFixed(2)) })
-//       .where(eq(payrollPeriods.id, periodId));
-
-//     revalidatePath(`/dashboard/payroll/${periodId}`);
-//     return {
-//       success: true,
-//       message: "Payslips generated using current HR settings!",
-//     };
-//   } catch (error) {
-//     console.error("Generate Payslips Error:", error);
-//     return { success: false, error: "Failed to generate payslips." };
-//   }
-// }
 export async function generatePayslipsAction(periodId: string) {
   try {
     const settings = await db.query.payrollSettings.findFirst();
@@ -207,21 +64,32 @@ export async function generatePayslipsAction(periodId: string) {
       );
       const daysWorked = parseFloat((totalHours / 8).toFixed(2));
 
-      // 2. 👇 NEW: Calculate Overtime (From your awesome schema!)
+      // 2. Calculate Overtime (From your awesome schema!)
       const totalOtMinutes = logs.reduce(
         (sum, log) => sum + (log.overtimeMinutes || 0),
         0,
       );
       const otHours = totalOtMinutes / 60;
 
-      // 3. Base Salary Math
-      const monthlySalary = Number(emp.basicSalary || 0) / 100; // Assuming centavos
-      const dailyRate = monthlySalary / 22; // Standard 22 working days
-      const hourlyRate = dailyRate / 8;
+      // 3. 👇 FIX: Dynamic Base Salary Math based on Salary Type from Neon DB
+      const storedSalary = Number(emp.basicSalary || 0) / 100; // Convert from centavos
+      let dailyRate = 0;
+      let monthlySalary = 0;
 
+      if (emp.salaryType === "DAILY") {
+        // 🟢 DAILY EARNERS (e.g., Jamaica)
+        dailyRate = storedSalary; // Her basic salary IS her daily rate (₱550)
+        monthlySalary = dailyRate * 22; // Project a monthly income just to calculate proper SSS/PhilHealth brackets
+      } else {
+        // 🔵 SEMI-MONTHLY / MONTHLY EARNERS (e.g., Archie, Lorena)
+        monthlySalary = storedSalary; // Their basic salary is their monthly rate (₱20,000)
+        dailyRate = monthlySalary / 22; // Standard 22 working days divisor
+      }
+
+      const hourlyRate = dailyRate / 8;
       const basicPay = parseFloat((daysWorked * dailyRate).toFixed(2));
 
-      // 4. 👇 NEW: DOLE Overtime Math (125% premium for regular days)
+      // 4. DOLE Overtime Math (125% premium for regular days)
       const otHourlyRate = hourlyRate * 1.25;
       const overtimePay = parseFloat((otHours * otHourlyRate).toFixed(2));
 
@@ -267,7 +135,7 @@ export async function generatePayslipsAction(periodId: string) {
           payrollPeriodId: periodId,
           employeeId: emp.id,
           daysWorked,
-          overtimePay, // 👇 NEW: Save the OT cash to the database
+          overtimePay,
           grossIncome,
           sss,
           philhealth,
@@ -299,7 +167,7 @@ export async function generatePayslipsAction(periodId: string) {
     revalidatePath(`/dashboard/payroll/${periodId}`);
     return {
       success: true,
-      message: "Payslips generated with Overtime calculations!",
+      message: "Payslips generated with accurate Daily & Monthly rates!",
     };
   } catch (error) {
     console.error("Generate Payslips Error:", error);
