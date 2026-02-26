@@ -330,3 +330,26 @@ export async function deleteEmployee(id: string) {
     return { success: false, error: "Failed to delete employee" };
   }
 }
+
+// =========================
+// 6. UPDATE KIOSK PIN
+// =========================
+export async function updateEmployeePin(id: string, newPin: string) {
+  try {
+    if (!newPin || newPin.length < 4) {
+      return { success: false, error: "PIN must be at least 4 digits." };
+    }
+
+    await db
+      .update(employees)
+      // 👇 Changed from 'pin' to 'pinCode' to match your exact Neon schema
+      .set({ pinCode: newPin })
+      .where(eq(employees.id, id));
+
+    revalidatePath("/dashboard/employees");
+    return { success: true, message: "Kiosk PIN updated successfully!" };
+  } catch (error) {
+    console.error("Update PIN error:", error);
+    return { success: false, error: "Failed to update PIN." };
+  }
+}

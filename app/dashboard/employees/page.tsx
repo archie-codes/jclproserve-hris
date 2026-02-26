@@ -3,7 +3,6 @@
 // import { desc } from "drizzle-orm";
 // import { EmployeesClient } from "@/components/dashboard/employees/employees-client";
 
-
 // export default async function EmployeesPage() {
 //   // 1. Fetch data directly from DB
 //   const employeesList = await db.query.employees.findMany({
@@ -14,28 +13,26 @@
 //   return <EmployeesClient data={employeesList} />;
 // }
 
-
 // app/dashboard/employees/page.tsx
-
-
 
 import { db } from "@/src/db";
 import { employees } from "@/src/db/schema";
 import { desc } from "drizzle-orm";
 import { EmployeesClient } from "@/components/dashboard/employees/employees-client";
 import { cookies } from "next/headers";
+import { ChangePinModal } from "@/components/dashboard/employees/change-pin-modal";
 
 export default async function EmployeesPage() {
   // 1. Get Role from Cookie
   const cookieStore = await cookies();
   const sessionCookie = cookieStore.get("session")?.value;
-  
-  let userRole = "USER"; 
+
+  let userRole = "USER";
 
   if (sessionCookie) {
     try {
       const sessionData = JSON.parse(sessionCookie);
-      userRole = sessionData.role; 
+      userRole = sessionData.role;
     } catch (e) {
       console.error("Session parse error:", e);
     }
@@ -58,14 +55,20 @@ export default async function EmployeesPage() {
     ...emp,
     // Convert Dates to ISO strings
     dateHired: emp.dateHired ? new Date(emp.dateHired).toISOString() : null,
-    dateRegularized: emp.dateRegularized ? new Date(emp.dateRegularized).toISOString() : null,
-    dateResigned: emp.dateResigned ? new Date(emp.dateResigned).toISOString() : null,
-    dateOfBirth: emp.dateOfBirth ? new Date(emp.dateOfBirth).toISOString() : null,
+    dateRegularized: emp.dateRegularized
+      ? new Date(emp.dateRegularized).toISOString()
+      : null,
+    dateResigned: emp.dateResigned
+      ? new Date(emp.dateResigned).toISOString()
+      : null,
+    dateOfBirth: emp.dateOfBirth
+      ? new Date(emp.dateOfBirth).toISOString()
+      : null,
     createdAt: emp.createdAt ? new Date(emp.createdAt).toISOString() : null,
     updatedAt: emp.updatedAt ? new Date(emp.updatedAt).toISOString() : null,
-    
+
     // Map mismatched fields (Schema uses 'taxableAllowance', Client uses 'allowance')
-    allowance: emp.taxableAllowance ?? 0, 
+    allowance: emp.taxableAllowance ?? 0,
   }));
 
   // 4. Pass the transformed data

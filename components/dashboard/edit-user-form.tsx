@@ -56,7 +56,7 @@ export function EditUserForm({
     startTransition(async () => {
       await updateUserProfile(user.id, formData);
       router.refresh();
-      toast.success("Profile updated successfully", { position: "top-center" });
+      toast.success("Profile updated successfully");
       onSuccess();
     });
   }
@@ -66,7 +66,7 @@ export function EditUserForm({
     startTransition(async () => {
       await resetUserPassword(user.id, formData);
       setPassword("");
-      toast.success("Password reset successfully", { position: "top-center" });
+      toast.success("Password reset successfully");
       onSuccess();
     });
   }
@@ -100,11 +100,15 @@ export function EditUserForm({
                   onClientUploadComplete={(res) => {
                     if (res?.[0]) {
                       setImageUrl(res[0].url);
-                      toast.success("Image uploaded!", { position: "top-center" });
+                      toast.success("Image uploaded!", {
+                        position: "top-center",
+                      });
                     }
                   }}
                   onUploadError={(error: Error) => {
-                    toast.error(`Upload failed: ${error.message}`, { position: "top-center" });
+                    toast.error(`Upload failed: ${error.message}`, {
+                      position: "top-center",
+                    });
                   }}
                   // 👇 ADD THIS STYLING BLOCK
                   appearance={{
