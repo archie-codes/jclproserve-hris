@@ -200,12 +200,6 @@ export default function AttendanceKioskPage() {
           </div>
         </CardContent>
       </Card>
-
-      {/* FOOTER */}
-      <div className="mt-12 flex flex-col items-center gap-2 opacity-40">
-        <img src="/jcl-logo.svg" alt="Logo" className="h-8 grayscale invert" />
-        <p className="text-xs text-white">System v2.0 • Secured Connection</p>
-      </div>
     </div>
   );
 }
