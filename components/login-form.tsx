@@ -327,6 +327,7 @@ export function LoginForm({
                         required
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
+                        disabled={loading}
                       />
                     </div>
                   </Field>
@@ -350,6 +351,7 @@ export function LoginForm({
                         required
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
+                        disabled={loading}
                       />
                       <Button
                         type="button"
@@ -357,6 +359,7 @@ export function LoginForm({
                         size="sm"
                         className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
                         onClick={() => setShowPassword(!showPassword)}
+                        disabled={loading}
                       >
                         {showPassword ? (
                           <EyeOff className="h-4 w-4 text-muted-foreground" />

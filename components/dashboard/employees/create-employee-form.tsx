@@ -475,7 +475,7 @@ export function CreateEmployeeForm({
                         <FormControl>
                           <Input
                             {...field}
-                            disabled={true}
+                            disabled={false}
                             className="font-mono font-bold"
                           />
                         </FormControl>

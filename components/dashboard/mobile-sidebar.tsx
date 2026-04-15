@@ -92,7 +92,7 @@ export function MobileSidebar({ role }: { role: string }) {
         </SheetHeader>
 
         {/* Your existing Sidebar component */}
-        <Sidebar role={role} /> 
+        <Sidebar role={role} isMobile={true} onClose={() => setOpen(false)} /> 
       </SheetContent>
     </Sheet>
   );

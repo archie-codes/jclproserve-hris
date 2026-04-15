@@ -16,11 +16,11 @@ export default async function DashboardLayout({
 
   return (
     <div className="flex h-screen bg-background text-foreground">
-      <div className="hidden md:block w-64 shrink-0">
+      <div className="hidden md:block shrink-0">
         <Sidebar role={user.role} />
       </div>
 
-      <div className="flex flex-1 flex-col overflow-hidden">
+      <div className="flex flex-1 flex-col overflow-hidden bg-slate-100 dark:bg-indigo-950/20">
         <Topbar user={user} />
         <main className="flex-1 overflow-y-auto p-6 scroll-smooth">
           {children}

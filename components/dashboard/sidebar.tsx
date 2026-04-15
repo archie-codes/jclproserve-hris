@@ -10,13 +10,15 @@ import {
   FileText,
   Settings,
   ShieldCheck,
-  Briefcase,
   Clock,
   FileEdit,
   ClipboardList,
   Wallet,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   LucideIcon,
+  X,
 } from "lucide-react";
 
 // 👇 1. Define the strict TypeScript shapes
@@ -72,7 +74,7 @@ const staffMenu: MenuItem[] = [
   { label: "Attendance", href: "/dashboard/attendance", icon: Clock },
 ];
 
-export function Sidebar({ role }: { role: string }) {
+export function Sidebar({ role, isMobile, onClose }: { role: string; isMobile?: boolean; onClose?: () => void }) {
   const pathname = usePathname();
 
   // 👇 3. Apply the type to your let variable
@@ -83,6 +85,9 @@ export function Sidebar({ role }: { role: string }) {
   if (role === "COORDINATOR") menu = staffMenu;
 
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
+  const [isCollapsedState, setIsCollapsed] = useState(false);
+  
+  const isCollapsed = isMobile ? false : isCollapsedState;
 
   useEffect(() => {
     if (pathname.includes("/dashboard/recruitment")) {
@@ -95,29 +100,59 @@ export function Sidebar({ role }: { role: string }) {
   };
 
   return (
-    <aside className="w-full flex flex-col h-full bg-background border-r border-border transition-colors duration-300">
+    <aside
+      className={cn(
+        "relative flex flex-col h-full bg-background border-r border-border transition-all duration-300 z-50",
+        isMobile ? "w-full" : (isCollapsed ? "w-20" : "w-64")
+      )}
+    >
+      {/* Toggle Sidebar Button */}
+      {!isMobile && (
+        <button
+          onClick={() => setIsCollapsed(!isCollapsed)}
+          className="absolute -right-3 top-6 flex h-6 w-6 items-center justify-center rounded-full border border-border bg-background shadow-xs text-muted-foreground hover:text-foreground z-10 transition-transform duration-200 hover:scale-110"
+        >
+          {isCollapsed ? (
+            <ChevronRight className="h-4 w-4" />
+          ) : (
+            <ChevronLeft className="h-4 w-4" />
+          )}
+        </button>
+      )}
+
+      {/* Mobile Close Button */}
+      {isMobile && (
+        <button
+          onClick={onClose}
+          className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-md bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900 transition-colors z-50 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-white"
+        >
+          <X className="h-5 w-5" />
+        </button>
+      )}
+
       {/* Header */}
-      <div className="h-16 flex items-center px-6 border-b border-border">
-        <div className="flex items-center gap-2">
-          <div className="h-8 w-8 rounded-lg bg-indigo-600 flex items-center justify-center">
-            <Briefcase className="h-5 w-5 text-white" />
-          </div>
-          <div className="flex flex-col">
-            <span className="text-lg font-bold text-foreground tracking-tight leading-none">
-              JC&L
-            </span>
-            <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest">
-              HR System
-            </span>
-          </div>
+      <div className={cn("flex flex-col items-center justify-center border-b border-border transition-all duration-300 overflow-hidden", isCollapsed ? "h-20 px-0" : "py-6 px-2")}>
+        <div className={cn("shrink-0 flex items-center justify-center transition-all duration-300", isCollapsed ? "h-8 w-8" : "w-32")}>
+          <img 
+            src="/main-logo.png" 
+            alt="Main Logo" 
+            className={cn("object-contain drop-shadow-sm transition-all duration-300", isCollapsed ? "h-full w-full" : "w-full h-auto")}
+          />
         </div>
+        {!isCollapsed && (
+          <div className="animate-in fade-in zoom-in duration-300 mt-0 pt-1">
+            <span className="text-xs font-bold text-foreground uppercase tracking-widest leading-none whitespace-nowrap drop-shadow-sm">
+              HR SYSTEM
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto py-6 px-3 space-y-1">
-        <div className="px-3 mb-2">
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-            Main Menu
+      <nav className="flex-1 overflow-y-auto py-6 px-3 space-y-2">
+        <div className={cn("mb-2 transition-all duration-300", isCollapsed ? "px-0 text-center" : "px-3")}>
+          <p className="text-xs font-semibold text-muted-foreground/70 uppercase tracking-wider">
+            {isCollapsed ? "Menu" : "Main Menu"}
           </p>
         </div>
 
@@ -129,58 +164,78 @@ export function Sidebar({ role }: { role: string }) {
             return (
               <div key={item.label} className="space-y-1">
                 <button
-                  onClick={() => toggleGroup(item.label)}
+                  onClick={() => {
+                    if (isCollapsed) setIsCollapsed(false);
+                    toggleGroup(item.label);
+                  }}
                   className={cn(
-                    "w-full flex items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 group",
+                    "w-full flex items-center justify-between gap-3 rounded-lg py-2.5 text-sm font-medium transition-all duration-300 group overflow-hidden",
+                    isCollapsed ? "px-0 justify-center" : "px-3",
                     isGroupActive && !isOpen
-                      ? "text-indigo-600 dark:text-indigo-400"
-                      : "text-muted-foreground hover:bg-slate-100 hover:text-foreground dark:hover:bg-slate-800 dark:hover:text-white",
+                      ? "text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/10"
+                      : "text-muted-foreground hover:bg-slate-100 hover:text-foreground dark:hover:bg-slate-800 dark:hover:text-white"
                   )}
+                  title={isCollapsed ? item.label : undefined}
                 >
                   <div className="flex items-center gap-3">
-                    <item.icon className="h-5 w-5" />
-                    {item.label}
-                  </div>
-                  <ChevronDown
-                    className={cn(
-                      "h-4 w-4 transition-transform duration-200",
-                      isOpen ? "rotate-180" : "",
+                    <item.icon
+                      className={cn(
+                        "h-5 w-5 shrink-0 transition-transform duration-300 group-hover:scale-110",
+                        isGroupActive && !isOpen ? "text-indigo-600" : "group-hover:text-indigo-500"
+                      )}
+                    />
+                    {!isCollapsed && (
+                      <span className="transition-transform duration-300 group-hover:translate-x-1 whitespace-nowrap">
+                        {item.label}
+                      </span>
                     )}
-                  />
+                  </div>
+                  {!isCollapsed && (
+                    <ChevronDown
+                      className={cn(
+                        "h-4 w-4 shrink-0 transition-transform duration-200",
+                        isOpen ? "rotate-180" : ""
+                      )}
+                    />
+                  )}
                 </button>
 
                 {/* 👇 The Perfectly Connected Tree Branches Layout */}
-                {isOpen && (
-                  <div className="relative space-y-1 mt-1 animate-in slide-in-from-top-2 duration-200">
-                    {/* 1. The Vertical "Trunk" Line - Aligned exactly to the center of the icon above (22px) */}
-                    <div className="absolute left-[22px] top-0 bottom-4 w-px bg-slate-300 dark:bg-slate-700"></div>
+                {isOpen && !isCollapsed && (
+                  <div className="relative space-y-1 mt-1 animate-in slide-in-from-top-2 duration-300">
+                    {/* 1. The Vertical "Trunk" Line */}
+                    <div className="absolute left-[22px] top-0 bottom-4 w-px bg-slate-200 dark:bg-slate-700"></div>
 
                     {item.subItems.map((sub) => {
                       const isSubActive = pathname.startsWith(sub.href || "");
 
                       return (
-                        // padding-left is exactly 40px (22px for trunk + 18px for branch)
-                        <div key={sub.href} className="relative pl-[40px] pr-3">
-                          {/* 2. The Horizontal "Branch" Line - Connects seamlessly from 22px to 40px */}
+                        <div key={sub.href} className="relative pl-[40px] pr-3 group/sub">
+                          {/* 2. The Horizontal "Branch" Line */}
                           <div
                             className={cn(
-                              "absolute left-[22px] top-1/2 h-px w-[18px] -translate-y-1/2 transition-colors duration-200",
+                              "absolute left-[22px] top-1/2 h-px w-[18px] -translate-y-1/2 transition-colors duration-300",
                               isSubActive
                                 ? "bg-indigo-600 dark:bg-indigo-500"
-                                : "bg-slate-300 dark:bg-slate-700",
+                                : "bg-slate-200 dark:bg-slate-700"
                             )}
                           ></div>
 
                           <Link
                             href={sub.href || "#"}
+                            onClick={() => {
+                              if (isMobile && onClose) onClose();
+                            }}
                             className={cn(
-                              "block rounded-md px-3 py-2 text-sm font-medium transition-all duration-200",
+                              "block rounded-md px-3 py-2 text-sm font-medium transition-all duration-300",
                               isSubActive
                                 ? "bg-indigo-50 text-indigo-700 dark:bg-indigo-900/20 dark:text-indigo-300"
-                                : "text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800 dark:hover:text-white",
+                                : "text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800 dark:hover:text-white"
                             )}
                           >
-                            {sub.label}
+                            <span className="inline-block transition-transform duration-300 group-hover/sub:translate-x-1">
+                              {sub.label}
+                            </span>
                           </Link>
                         </div>
                       );
@@ -195,37 +250,46 @@ export function Sidebar({ role }: { role: string }) {
           const isActive =
             item.href === "/dashboard"
               ? pathname === "/dashboard"
-              : pathname.startsWith(item.href || ""); // Fallback added for TS safety
+              : pathname.startsWith(item.href || "");
 
           return (
             <Link
               key={item.href || item.label}
-              href={item.href || "#"} // Fallback added for TS safety
+              href={item.href || "#"}
+              onClick={() => {
+                if (isMobile && onClose) onClose();
+              }}
               className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 group",
+                "flex items-center gap-3 rounded-lg py-2.5 text-sm font-medium transition-all duration-300 group overflow-hidden",
+                isCollapsed ? "px-0 justify-center" : "px-3",
                 isActive
                   ? "bg-indigo-50 text-indigo-700 dark:bg-indigo-900/20 dark:text-indigo-300"
-                  : "text-muted-foreground hover:bg-slate-100 hover:text-foreground dark:hover:bg-slate-800 dark:hover:text-white",
+                  : "text-muted-foreground hover:bg-slate-100 hover:text-foreground dark:hover:bg-slate-800 dark:hover:text-white"
               )}
+              title={isCollapsed ? item.label : undefined}
             >
               <item.icon
                 className={cn(
-                  "h-5 w-5 transition-colors",
+                  "h-5 w-5 shrink-0 transition-transform duration-300 group-hover:scale-110",
                   isActive
                     ? "text-indigo-600 dark:text-indigo-400"
-                    : "text-muted-foreground group-hover:text-foreground dark:text-slate-500 dark:group-hover:text-slate-300",
+                    : "text-muted-foreground group-hover:text-indigo-500 dark:text-slate-500 dark:group-hover:text-indigo-400"
                 )}
               />
-              {item.label}
+              {!isCollapsed && (
+                <span className="transition-transform duration-300 group-hover:translate-x-1 whitespace-nowrap">
+                  {item.label}
+                </span>
+              )}
             </Link>
           );
         })}
       </nav>
 
       {/* Footer Info */}
-      <div className="p-4 border-t border-border">
-        <p className="text-xs text-center text-muted-foreground">
-          © 2026 JC&L Proserve
+      <div className={cn("p-4 border-t border-border transition-all duration-300", isCollapsed ? "px-2" : "")}>
+        <p className={cn("text-center text-muted-foreground transition-all duration-300", isCollapsed ? "text-[10px]" : "text-xs")}>
+          {isCollapsed ? "©'26" : "© 2026 JC&L Proserve"}
         </p>
       </div>
     </aside>
