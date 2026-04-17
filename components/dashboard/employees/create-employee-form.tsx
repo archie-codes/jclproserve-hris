@@ -214,8 +214,15 @@ export function CreateEmployeeForm({
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      // Pass the raw values. The server action needs to handle UUIDs now.
-      const result = await createEmployee(values as any);
+      // 👇 NEW: Convert human-readable currency into database cents
+      const formattedValues = {
+        ...values,
+        basicSalary: Math.round(values.basicSalary * 100),
+        allowance: Math.round(values.allowance * 100),
+      };
+
+      // 👇 Pass the formattedValues instead of the raw values
+      const result = await createEmployee(formattedValues as any);
 
       if (result.success) {
         toast.success("Employee record created successfully", {

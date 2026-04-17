@@ -91,38 +91,6 @@ export async function resetUserPassword(userId: string, formData: FormData) {
   await db.update(users).set({ passwordHash }).where(eq(users.id, userId));
 }
 
-/* =========================
-   DELETE USER (SOFT DELETE)
-========================= */
-// export async function deleteUser(userId: string) {
-//   const currentUser = await getCurrentUser();
-
-//   if (!currentUser || currentUser.role !== "ADMIN") {
-//     throw new Error("Unauthorized");
-//   }
-
-//   if (!userId) {
-//     throw new Error("User ID is required");
-//   }
-
-//   // 🚫 Prevent self-delete
-//   if (currentUser.id === userId) {
-//     throw new Error("You cannot delete your own account");
-//   }
-
-//   // ♻️ Soft delete instead of hard delete
-//   //   await db
-//   //     .update(users)
-//   //     .set({ isActive: false })
-//   //     .where(eq(users.id, userId));
-//   try {
-//     await db.delete(users).where(eq(users.id, userId));
-//     revalidatePath("/dashboard/users");
-//     return { success: true };
-//   } catch (error) {
-//     return { success: false, error: "Failed to delete" };
-//   }
-// }
 export async function deleteUser(
   userId: string,
 ): Promise<{ success: boolean; error?: string }> {

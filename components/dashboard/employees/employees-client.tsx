@@ -285,7 +285,7 @@ export function EmployeesClient({ data, userRole }: EmployeesClientProps) {
       {/* 2. STATS CARDS (Matching Users Page Style) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="border-l-4 border-l-blue-500 shadow-sm bg-linear-to-br from-white to-blue-50/50 dark:from-slate-950 dark:to-slate-900">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0">
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Total Staff
             </CardTitle>
@@ -300,7 +300,7 @@ export function EmployeesClient({ data, userRole }: EmployeesClientProps) {
         </Card>
 
         <Card className="border-l-4 border-l-emerald-500 shadow-sm bg-linear-to-br from-white to-emerald-50/50 dark:from-slate-950 dark:to-slate-900">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0">
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Regular
             </CardTitle>
@@ -313,7 +313,7 @@ export function EmployeesClient({ data, userRole }: EmployeesClientProps) {
         </Card>
 
         <Card className="border-l-4 border-l-amber-500 shadow-sm bg-linear-to-br from-white to-amber-50/50 dark:from-slate-950 dark:to-slate-900">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0">
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Probationary
             </CardTitle>
@@ -326,7 +326,7 @@ export function EmployeesClient({ data, userRole }: EmployeesClientProps) {
         </Card>
 
         <Card className="border-l-4 border-l-red-500 shadow-sm bg-linear-to-br from-white to-red-50/50 dark:from-slate-950 dark:to-slate-900">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0">
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Resigned
             </CardTitle>

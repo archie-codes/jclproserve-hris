@@ -32,13 +32,24 @@ type MenuItem = {
   icon: LucideIcon;
   href?: string; // Optional because Groups don't have an href
   subItems?: SubItem[]; // Optional because standard links don't have subItems
+  comingSoon?: boolean;
 };
 
 // 👇 2. Apply the type to your arrays
 const adminMenu: MenuItem[] = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { label: "Attendance", href: "/dashboard/attendance", icon: Clock },
-  { label: "Payroll", href: "/dashboard/payroll", icon: Wallet },
+  {
+    label: "Attendance",
+    href: "/dashboard/attendance",
+    icon: Clock,
+    comingSoon: true,
+  },
+  {
+    label: "Payroll",
+    href: "/dashboard/payroll",
+    icon: Wallet,
+    comingSoon: true,
+  },
   {
     label: "Exams",
     icon: FileEdit,
@@ -55,8 +66,18 @@ const adminMenu: MenuItem[] = [
 
 const hrMenu: MenuItem[] = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { label: "Attendance", href: "/dashboard/attendance", icon: Clock },
-  { label: "Payroll", href: "/dashboard/payroll", icon: Wallet },
+  {
+    label: "Attendance",
+    href: "/dashboard/attendance",
+    icon: Clock,
+    comingSoon: true,
+  },
+  {
+    label: "Payroll",
+    href: "/dashboard/payroll",
+    icon: Wallet,
+    comingSoon: true,
+  },
   {
     label: "Exams",
     icon: FileEdit,
@@ -71,10 +92,23 @@ const hrMenu: MenuItem[] = [
 
 const staffMenu: MenuItem[] = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { label: "Attendance", href: "/dashboard/attendance", icon: Clock },
+  {
+    label: "Attendance",
+    href: "/dashboard/attendance",
+    icon: Clock,
+    comingSoon: true,
+  },
 ];
 
-export function Sidebar({ role, isMobile, onClose }: { role: string; isMobile?: boolean; onClose?: () => void }) {
+export function Sidebar({
+  role,
+  isMobile,
+  onClose,
+}: {
+  role: string;
+  isMobile?: boolean;
+  onClose?: () => void;
+}) {
   const pathname = usePathname();
 
   // 👇 3. Apply the type to your let variable
@@ -86,7 +120,7 @@ export function Sidebar({ role, isMobile, onClose }: { role: string; isMobile?: 
 
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
   const [isCollapsedState, setIsCollapsed] = useState(false);
-  
+
   const isCollapsed = isMobile ? false : isCollapsedState;
 
   useEffect(() => {
@@ -103,7 +137,7 @@ export function Sidebar({ role, isMobile, onClose }: { role: string; isMobile?: 
     <aside
       className={cn(
         "relative flex flex-col h-full bg-background border-r border-border transition-all duration-300 z-50",
-        isMobile ? "w-full" : (isCollapsed ? "w-20" : "w-64")
+        isMobile ? "w-full" : isCollapsed ? "w-20" : "w-64",
       )}
     >
       {/* Toggle Sidebar Button */}
@@ -131,18 +165,28 @@ export function Sidebar({ role, isMobile, onClose }: { role: string; isMobile?: 
       )}
 
       {/* Header */}
-      <div className={cn("flex flex-col items-center justify-center border-b border-border transition-all duration-300 overflow-hidden", isCollapsed ? "h-20 px-0" : "py-6 px-2")}>
-        <div className={cn("shrink-0 flex items-center justify-center transition-all duration-300", isCollapsed ? "h-8 w-8" : "w-32")}>
-          <img 
-            src="/main-logo.png" 
-            alt="Main Logo" 
-            className={cn("object-contain drop-shadow-sm transition-all duration-300", isCollapsed ? "h-full w-full" : "w-full h-auto")}
+      <div
+        className={cn(
+          "flex items-center border-b border-border transition-all duration-300 overflow-hidden",
+          isCollapsed ? "h-20 justify-center px-0" : "h-20 px-5 gap-3",
+        )}
+      >
+        <div
+          className={cn(
+            "shrink-0 flex items-center justify-center transition-all duration-300",
+            isCollapsed ? "h-8 w-8" : "h-10 w-10",
+          )}
+        >
+          <img
+            src="/monogram.ico"
+            alt="JC&L Logo"
+            className="object-contain drop-shadow-sm h-full w-full"
           />
         </div>
         {!isCollapsed && (
-          <div className="animate-in fade-in zoom-in duration-300 mt-0 pt-1">
-            <span className="text-xs font-bold text-foreground uppercase tracking-widest leading-none whitespace-nowrap drop-shadow-sm">
-              HR SYSTEM
+          <div className="animate-in fade-in slide-in-from-left-2 duration-300">
+            <span className="text-base font-bold text-foreground whitespace-nowrap drop-shadow-sm tracking-wide">
+              JC&L HRIS
             </span>
           </div>
         )}
@@ -150,7 +194,12 @@ export function Sidebar({ role, isMobile, onClose }: { role: string; isMobile?: 
 
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto py-6 px-3 space-y-2">
-        <div className={cn("mb-2 transition-all duration-300", isCollapsed ? "px-0 text-center" : "px-3")}>
+        <div
+          className={cn(
+            "mb-2 transition-all duration-300",
+            isCollapsed ? "px-0 text-center" : "px-3",
+          )}
+        >
           <p className="text-xs font-semibold text-muted-foreground/70 uppercase tracking-wider">
             {isCollapsed ? "Menu" : "Main Menu"}
           </p>
@@ -173,7 +222,7 @@ export function Sidebar({ role, isMobile, onClose }: { role: string; isMobile?: 
                     isCollapsed ? "px-0 justify-center" : "px-3",
                     isGroupActive && !isOpen
                       ? "text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/10"
-                      : "text-muted-foreground hover:bg-slate-100 hover:text-foreground dark:hover:bg-slate-800 dark:hover:text-white"
+                      : "text-muted-foreground hover:bg-slate-100 hover:text-foreground dark:hover:bg-slate-800 dark:hover:text-white",
                   )}
                   title={isCollapsed ? item.label : undefined}
                 >
@@ -181,7 +230,9 @@ export function Sidebar({ role, isMobile, onClose }: { role: string; isMobile?: 
                     <item.icon
                       className={cn(
                         "h-5 w-5 shrink-0 transition-transform duration-300 group-hover:scale-110",
-                        isGroupActive && !isOpen ? "text-indigo-600" : "group-hover:text-indigo-500"
+                        isGroupActive && !isOpen
+                          ? "text-indigo-600"
+                          : "group-hover:text-indigo-500",
                       )}
                     />
                     {!isCollapsed && (
@@ -194,7 +245,7 @@ export function Sidebar({ role, isMobile, onClose }: { role: string; isMobile?: 
                     <ChevronDown
                       className={cn(
                         "h-4 w-4 shrink-0 transition-transform duration-200",
-                        isOpen ? "rotate-180" : ""
+                        isOpen ? "rotate-180" : "",
                       )}
                     />
                   )}
@@ -210,14 +261,17 @@ export function Sidebar({ role, isMobile, onClose }: { role: string; isMobile?: 
                       const isSubActive = pathname.startsWith(sub.href || "");
 
                       return (
-                        <div key={sub.href} className="relative pl-[40px] pr-3 group/sub">
+                        <div
+                          key={sub.href}
+                          className="relative pl-[40px] pr-3 group/sub"
+                        >
                           {/* 2. The Horizontal "Branch" Line */}
                           <div
                             className={cn(
                               "absolute left-[22px] top-1/2 h-px w-[18px] -translate-y-1/2 transition-colors duration-300",
                               isSubActive
                                 ? "bg-indigo-600 dark:bg-indigo-500"
-                                : "bg-slate-200 dark:bg-slate-700"
+                                : "bg-slate-200 dark:bg-slate-700",
                             )}
                           ></div>
 
@@ -230,7 +284,7 @@ export function Sidebar({ role, isMobile, onClose }: { role: string; isMobile?: 
                               "block rounded-md px-3 py-2 text-sm font-medium transition-all duration-300",
                               isSubActive
                                 ? "bg-indigo-50 text-indigo-700 dark:bg-indigo-900/20 dark:text-indigo-300"
-                                : "text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800 dark:hover:text-white"
+                                : "text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800 dark:hover:text-white",
                             )}
                           >
                             <span className="inline-block transition-transform duration-300 group-hover/sub:translate-x-1">
@@ -264,7 +318,7 @@ export function Sidebar({ role, isMobile, onClose }: { role: string; isMobile?: 
                 isCollapsed ? "px-0 justify-center" : "px-3",
                 isActive
                   ? "bg-indigo-50 text-indigo-700 dark:bg-indigo-900/20 dark:text-indigo-300"
-                  : "text-muted-foreground hover:bg-slate-100 hover:text-foreground dark:hover:bg-slate-800 dark:hover:text-white"
+                  : "text-muted-foreground hover:bg-slate-100 hover:text-foreground dark:hover:bg-slate-800 dark:hover:text-white",
               )}
               title={isCollapsed ? item.label : undefined}
             >
@@ -273,13 +327,20 @@ export function Sidebar({ role, isMobile, onClose }: { role: string; isMobile?: 
                   "h-5 w-5 shrink-0 transition-transform duration-300 group-hover:scale-110",
                   isActive
                     ? "text-indigo-600 dark:text-indigo-400"
-                    : "text-muted-foreground group-hover:text-indigo-500 dark:text-slate-500 dark:group-hover:text-indigo-400"
+                    : "text-muted-foreground group-hover:text-indigo-500 dark:text-slate-500 dark:group-hover:text-indigo-400",
                 )}
               />
               {!isCollapsed && (
-                <span className="transition-transform duration-300 group-hover:translate-x-1 whitespace-nowrap">
-                  {item.label}
-                </span>
+                <div className="flex flex-1 items-center transition-transform duration-300 group-hover:translate-x-1 overflow-hidden pr-2">
+                  <span className="whitespace-nowrap truncate">
+                    {item.label}
+                  </span>
+                  {item.comingSoon && (
+                    <span className="ml-auto inline-flex items-center rounded-full bg-red-200/50 px-2 py-0.5 text-[8px] font-bold text-red-500 dark:bg-red-700/50 dark:text-red-400 uppercase tracking-widest shrink-0">
+                      COMING SOON
+                    </span>
+                  )}
+                </div>
               )}
             </Link>
           );
@@ -287,8 +348,18 @@ export function Sidebar({ role, isMobile, onClose }: { role: string; isMobile?: 
       </nav>
 
       {/* Footer Info */}
-      <div className={cn("p-4 border-t border-border transition-all duration-300", isCollapsed ? "px-2" : "")}>
-        <p className={cn("text-center text-muted-foreground transition-all duration-300", isCollapsed ? "text-[10px]" : "text-xs")}>
+      <div
+        className={cn(
+          "p-4 border-t border-border transition-all duration-300",
+          isCollapsed ? "px-2" : "",
+        )}
+      >
+        <p
+          className={cn(
+            "text-center text-muted-foreground transition-all duration-300",
+            isCollapsed ? "text-[10px]" : "text-xs",
+          )}
+        >
           {isCollapsed ? "©'26" : "© 2026 JC&L Proserve"}
         </p>
       </div>

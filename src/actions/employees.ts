@@ -145,11 +145,11 @@ export async function createEmployee(rawData: EmployeeInput) {
         emergencyContactPhone: sanitize(data.emergencyContactPhone),
 
         // Compensation
-        basicSalary: Math.round(data.basicSalary * 100),
+        basicSalary: Math.round(data.basicSalary),
         salaryType: data.salaryType,
 
         // 🚨 FIX: Map 'allowance' to 'taxableAllowance' 🚨
-        taxableAllowance: Math.round((data.allowance || 0) * 100),
+        taxableAllowance: Math.round(data.allowance || 0),
       })
       .returning({ id: employees.id, firstName: employees.firstName });
 
@@ -182,6 +182,46 @@ export async function createEmployee(rawData: EmployeeInput) {
 // =========================
 // 3. GENERATE NEXT ID
 // =========================
+// export async function getNextEmployeeId() {
+//   try {
+//     const lastEmployee = await db.query.employees.findFirst({
+//       orderBy: [desc(employees.createdAt)],
+//       columns: { employeeNo: true },
+//     });
+
+//     const currentYear = new Date().getFullYear();
+//     const prefix = "JCL";
+
+//     if (!lastEmployee || !lastEmployee.employeeNo) {
+//       return `${prefix}${currentYear}0001`;
+//     }
+
+//     const lastId = lastEmployee.employeeNo;
+//     const parts = lastId.split(" ");
+
+//     if (parts.length < 2) return `${prefix}${currentYear}0001`;
+
+//     const numberPart = parts[1];
+//     const idYear = parseInt(numberPart.substring(0, 3));
+//     const idSequence = parseInt(numberPart.substring(3));
+
+//     if (idYear !== currentYear) {
+//       return `${prefix}${currentYear}0001`;
+//     }
+
+//     const nextSequence = idSequence + 1;
+//     const paddedSequence = nextSequence.toString().padStart(3, "0");
+
+//     return `${prefix}${currentYear}${paddedSequence}`;
+//   } catch (error) {
+//     console.error("Error generating ID:", error);
+//     return "";
+//   }
+// }
+
+// =========================
+// 3. GENERATE NEXT ID
+// =========================
 export async function getNextEmployeeId() {
   try {
     const lastEmployee = await db.query.employees.findFirst({
@@ -190,35 +230,117 @@ export async function getNextEmployeeId() {
     });
 
     const currentYear = new Date().getFullYear();
-    const prefix = "JCL";
+    const prefix = "JCL"; // Change to "ARC" if needed later!
 
+    // If no employees exist yet
     if (!lastEmployee || !lastEmployee.employeeNo) {
-      return `${prefix}-${currentYear}0001`;
+      return `${prefix}${currentYear}0001`;
     }
 
     const lastId = lastEmployee.employeeNo;
-    const parts = lastId.split("-");
 
-    if (parts.length < 2) return `${prefix}-${currentYear}0001`;
+    // Use Regex to safely split the ID into Year and Sequence
+    // This looks for "JCL" followed by exactly 4 digits (year), then any remaining digits (sequence)
+    const match = lastId.match(/^JCL(\d{4})(\d+)$/);
 
-    const numberPart = parts[1];
-    const idYear = parseInt(numberPart.substring(0, 4));
-    const idSequence = parseInt(numberPart.substring(4));
-
-    if (idYear !== currentYear) {
-      return `${prefix}-${currentYear}0001`;
+    // If the last ID in the database doesn't match our strict format, start fresh
+    if (!match) {
+      return `${prefix}${currentYear}0001`;
     }
 
+    const idYear = parseInt(match[1]); // e.g., 2026
+    const idSequence = parseInt(match[2]); // e.g., 5
+
+    // If it's a brand new year, reset the sequence back to 0001
+    if (idYear !== currentYear) {
+      return `${prefix}${currentYear}0001`;
+    }
+
+    // Otherwise, increment the sequence and pad it with leading zeros to stay 4 digits long
     const nextSequence = idSequence + 1;
     const paddedSequence = nextSequence.toString().padStart(4, "0");
 
-    return `${prefix}-${currentYear}${paddedSequence}`;
+    return `${prefix}${currentYear}${paddedSequence}`;
   } catch (error) {
     console.error("Error generating ID:", error);
     return "";
   }
 }
 
+// =========================
+// 4. UPDATE EMPLOYEE
+// =========================
+// type UpdateEmployeeData = Partial<EmployeeInput> & {
+//   dateResigned?: string | null;
+// };
+
+// export async function updateEmployee(id: string, data: any) {
+//   if (!id) return { success: false, error: "Missing ID" };
+
+//   try {
+//     // Sanitize Compensation before update
+//     const safeBasic =
+//       data.basicSalary !== undefined
+//         ? Math.round(Number(data.basicSalary) * 100)
+//         : undefined;
+//     const safeAllowance =
+//       data.allowance !== undefined
+//         ? Math.round(Number(data.allowance) * 100)
+//         : undefined;
+
+//     await db
+//       .update(employees)
+//       .set({
+//         firstName: data.firstName,
+//         lastName: data.lastName,
+//         middleName: sanitize(data.middleName),
+//         suffix: sanitize(data.suffix),
+//         dateOfBirth: data.dateOfBirth,
+//         gender: data.gender,
+//         civilStatus: data.civilStatus,
+//         imageUrl: sanitize(data.imageUrl),
+
+//         employeeNo: data.employeeNo,
+//         status: data.status,
+
+//         departmentId: data.departmentId,
+//         positionId: data.positionId,
+//         shiftId: data.shiftId,
+
+//         dateResigned: sanitize(data.dateResigned),
+//         dateHired: data.dateHired,
+//         dateRegularized: sanitize(data.dateRegularized),
+
+//         email: data.email,
+//         mobileNumber: sanitize(data.mobileNumber),
+//         address: sanitize(data.address),
+
+//         sssNo: sanitize(data.sssNo),
+//         philHealthNo: sanitize(data.philHealthNo),
+//         pagIbigNo: sanitize(data.pagIbigNo),
+//         tinNo: sanitize(data.tinNo),
+
+//         bankName: sanitize(data.bankName),
+//         bankAccountNo: sanitize(data.bankAccountNo),
+
+//         emergencyContactName: sanitize(data.emergencyContactName),
+//         emergencyContactPhone: sanitize(data.emergencyContactPhone),
+
+//         basicSalary: safeBasic,
+//         salaryType: data.salaryType,
+
+//         // 🚨 FIX: Map 'allowance' to 'taxableAllowance' 🚨
+//         taxableAllowance: safeAllowance,
+//       })
+//       .where(eq(employees.id, id));
+
+//     revalidatePath("/dashboard/employees");
+//     return { success: true };
+//   } catch (error) {
+//     console.error("Update Error:", error);
+//     return { success: false, error: "Failed to update employee" };
+//   }
+// }
 // =========================
 // 4. UPDATE EMPLOYEE
 // =========================
@@ -230,14 +352,15 @@ export async function updateEmployee(id: string, data: any) {
   if (!id) return { success: false, error: "Missing ID" };
 
   try {
-    // Sanitize Compensation before update
+    // 👇 FIX: Removed the '* 100' because the frontend is already sending cents!
+    // We just use Math.round to ensure it's a clean integer.
     const safeBasic =
       data.basicSalary !== undefined
-        ? Math.round(Number(data.basicSalary) * 100)
+        ? Math.round(Number(data.basicSalary))
         : undefined;
     const safeAllowance =
       data.allowance !== undefined
-        ? Math.round(Number(data.allowance) * 100)
+        ? Math.round(Number(data.allowance))
         : undefined;
 
     await db
@@ -293,20 +416,6 @@ export async function updateEmployee(id: string, data: any) {
     return { success: false, error: "Failed to update employee" };
   }
 }
-
-// // =========================
-// // 5. DELETE EMPLOYEE
-// // =========================
-// export async function deleteEmployee(id: string) {
-//   try {
-//     await db.delete(employees).where(eq(employees.id, id));
-//     revalidatePath("/dashboard/employees");
-//     return { success: true };
-//   } catch (error) {
-//     console.error("Delete error:", error);
-//     return { success: false, error: "Failed to delete employee" };
-//   }
-// }
 
 // =========================
 // 5. DELETE EMPLOYEE
