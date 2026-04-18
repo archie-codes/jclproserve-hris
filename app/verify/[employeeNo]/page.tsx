@@ -99,25 +99,25 @@ export default async function DigitalIdVerificationPage({
                 <div className="w-full flex flex-col gap-4 mt-auto">
                   <div className="bg-black/20 border border-white/5 p-4 rounded-2xl backdrop-blur-sm shadow-inner relative overflow-hidden group text-left">
                     <div className="absolute inset-0 bg-linear-to-br from-indigo-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                    <div className="flex items-center gap-2 text-indigo-400 mb-1.5">
+                    <div className="flex items-center gap-2 text-indigo-400 mb-1.5 text-center justify-center">
                       <Briefcase className="w-4 h-4" />
-                      <span className="text-[10px] font-bold uppercase tracking-widest">
+                      <span className="text-[10px] font-bold uppercase tracking-widest ">
                         Position
                       </span>
                     </div>
-                    <p className="text-slate-100 font-medium truncate text-sm">
+                    <p className="text-slate-100 font-medium truncate text-sm text-center justify-center">
                       {employee.position?.title || "N/A"}
                     </p>
                   </div>
                   <div className="bg-black/20 border border-white/5 p-4 rounded-2xl backdrop-blur-sm shadow-inner relative overflow-hidden group text-left">
                     <div className="absolute inset-0 bg-linear-to-br from-indigo-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                    <div className="flex items-center gap-2 text-indigo-400 mb-1.5">
+                    <div className="flex items-center gap-2 text-indigo-400 mb-1.5 text-center justify-center">
                       <Building2 className="w-4 h-4" />
                       <span className="text-[10px] font-bold uppercase tracking-widest">
                         Department
                       </span>
                     </div>
-                    <p className="text-slate-100 font-medium truncate text-sm">
+                    <p className="text-slate-100 font-medium truncate text-sm text-center justify-center">
                       {employee.department?.name || "N/A"}
                     </p>
                   </div>
