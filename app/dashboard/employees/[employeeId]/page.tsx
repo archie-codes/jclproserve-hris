@@ -552,7 +552,7 @@ export default async function EmployeeProfilePage({ params }: PageProps) {
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="flex flex-col items-center justify-center py-6">
-                    <div className="p-4 bg-white rounded-xl shadow-sm border mb-4">
+                    <div className="p-4 bg-white rounded-xl shadow-sm border dark:border-slate-800 mb-4 flex items-center justify-center">
                       <QRCodeSVG
                         value={`${typeof window !== "undefined" ? window.location.origin : ""}/verify/${employee.employeeNo}`}
                         size={180}

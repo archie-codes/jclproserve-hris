@@ -51,8 +51,8 @@ export function IdUploader({
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* ================= FRONT ID ================= */}
-        <div className="border-2 border-dashed rounded-xl p-4 flex flex-col items-center justify-center text-center bg-slate-50 relative min-h-[220px]">
-          <h4 className="text-sm font-semibold mb-4 z-10 bg-white/90 px-3 py-1 rounded-full shadow-sm absolute top-4">
+        <div className="border-2 border-dashed dark:border-slate-800 rounded-xl p-4 flex flex-col items-center justify-center text-center bg-slate-50 dark:bg-slate-900/50 relative min-h-[220px]">
+          <h4 className="text-sm font-semibold mb-4 z-10 bg-white/90 dark:bg-slate-950/90 dark:text-slate-200 px-3 py-1 rounded-full shadow-sm absolute top-4">
             Front of ID
           </h4>
 
@@ -104,7 +104,7 @@ export function IdUploader({
                 appearance={{
                   // Custom styling makes the button look like a big dropzone!
                   button:
-                    "w-full h-24 bg-indigo-50 hover:bg-indigo-100 border-2 border-dashed border-indigo-200 !text-indigo-500 font-semibold rounded-xl text-sm transition-all focus-within:ring-2 focus-within:ring-indigo-500",
+                    "w-full h-24 bg-indigo-50 dark:bg-indigo-500/10 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 border-2 border-dashed border-indigo-200 dark:border-indigo-500/30 !text-indigo-500 dark:!text-indigo-400 font-semibold rounded-xl text-sm transition-all focus-within:ring-2 focus-within:ring-indigo-500",
                   allowedContent: "hidden", // Hides the "Images up to 4MB" text for a cleaner look
                 }}
                 content={{
@@ -120,8 +120,8 @@ export function IdUploader({
         </div>
 
         {/* ================= BACK ID ================= */}
-        <div className="border-2 border-dashed rounded-xl p-4 flex flex-col items-center justify-center text-center bg-slate-50 relative min-h-[220px]">
-          <h4 className="text-sm font-semibold mb-4 z-10 bg-white/90 px-3 py-1 rounded-full shadow-sm absolute top-4">
+        <div className="border-2 border-dashed dark:border-slate-800 rounded-xl p-4 flex flex-col items-center justify-center text-center bg-slate-50 dark:bg-slate-900/50 relative min-h-[220px]">
+          <h4 className="text-sm font-semibold mb-4 z-10 bg-white/90 dark:bg-slate-950/90 dark:text-slate-200 px-3 py-1 rounded-full shadow-sm absolute top-4">
             Back of ID
           </h4>
 
@@ -172,7 +172,7 @@ export function IdUploader({
                 }}
                 appearance={{
                   button:
-                    "w-full h-24 bg-indigo-50 hover:bg-indigo-100 border-2 border-dashed border-indigo-200 !text-indigo-500 font-semibold rounded-xl text-sm transition-all focus-within:ring-2 focus-within:ring-indigo-500",
+                    "w-full h-24 bg-indigo-50 dark:bg-indigo-500/10 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 border-2 border-dashed border-indigo-200 dark:border-indigo-500/30 !text-indigo-500 dark:!text-indigo-400 font-semibold rounded-xl text-sm transition-all focus-within:ring-2 focus-within:ring-indigo-500",
                   allowedContent: "hidden",
                 }}
                 content={{
@@ -189,10 +189,10 @@ export function IdUploader({
       </div>
 
       {/* ================= SAVE BUTTON FOOTER ================= */}
-      <div className="flex flex-col items-center gap-4 pt-4 border-t mt-4 text-center">
+      <div className="flex flex-col items-center gap-4 pt-4 border-t dark:border-slate-800 mt-4 text-center">
         <div className="text-sm text-muted-foreground">
           {isCurrentlyUploading ? (
-            <span className="flex items-center text-indigo-600 font-medium">
+            <span className="flex items-center text-indigo-600 dark:text-indigo-400 font-medium">
               <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Uploading
               image...
             </span>
