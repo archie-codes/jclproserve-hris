@@ -34,10 +34,18 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { PrintButton } from "@/components/dashboard/employees/print-button";
 import { EditProfileButton } from "@/components/dashboard/employees/edit-profile-button";
 import { IdCardGenerator } from "@/components/dashboard/id-card-generator";
+import { QRCodeSVG } from "qrcode.react";
+import { IdUploader } from "@/components/dashboard/employees/id-uploader";
 
 interface PageProps {
   params: Promise<{ employeeId: string }>;
@@ -118,16 +126,39 @@ export default async function EmployeeProfilePage({ params }: PageProps) {
             <div className="bg-linear-to-b from-primary/10 to-transparent dark:from-primary/5 h-24" />
             <CardContent className="relative pt-0 pb-8 text-center">
               <div className="-mt-12 mb-4 flex justify-center">
-                <Avatar className="h-24 w-24 border-4 border-background shadow-md bg-white">
-                  <AvatarImage
-                    src={employee.imageUrl || ""}
-                    alt="Profile"
-                    className="object-cover"
-                  />
-                  <AvatarFallback className="text-2xl font-bold bg-primary text-primary-foreground">
-                    {getInitials(employee.firstName, employee.lastName)}
-                  </AvatarFallback>
-                </Avatar>
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <button className="rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">
+                      <Avatar className="h-24 w-24 border-4 border-background shadow-md bg-white hover:opacity-90 transition-opacity cursor-pointer">
+                        <AvatarImage
+                          src={employee.imageUrl || ""}
+                          alt="Profile"
+                          className="object-cover"
+                        />
+                        <AvatarFallback className="text-2xl font-bold bg-primary text-primary-foreground">
+                          {getInitials(employee.firstName, employee.lastName)}
+                        </AvatarFallback>
+                      </Avatar>
+                    </button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-2xl flex justify-center items-center bg-transparent border-0 shadow-none [&>button]:text-white [&>button]:bg-black/20 hover:[&>button]:bg-black/40 [&>button]:rounded-full [&>button]:p-1">
+                    <DialogTitle className="sr-only">
+                      Profile Picture
+                    </DialogTitle>
+                    {employee.imageUrl ? (
+                      /* eslint-disable-next-line @next/next/no-img-element */
+                      <img
+                        src={employee.imageUrl}
+                        alt="Profile full size"
+                        className="max-h-[85vh] w-auto max-w-full object-contain rounded-lg shadow-2xl"
+                      />
+                    ) : (
+                      <div className="h-64 w-64 sm:h-80 sm:w-80 flex items-center justify-center bg-primary rounded-full text-primary-foreground text-7xl sm:text-9xl font-bold shadow-2xl">
+                        {getInitials(employee.firstName, employee.lastName)}
+                      </div>
+                    )}
+                  </DialogContent>
+                </Dialog>
               </div>
 
               <h2 className="text-2xl font-bold text-foreground">
@@ -231,7 +262,7 @@ export default async function EmployeeProfilePage({ params }: PageProps) {
         {/* --- RIGHT CONTENT: DETAILS --- */}
         <div className="lg:col-span-8">
           <Tabs defaultValue="personal" className="w-full">
-            <TabsList className="h-auto grid w-full grid-cols-1 sm:grid-cols-3 mb-6 bg-slate-200 dark:bg-blue-900/10 p-1.5 rounded-xl gap-1">
+            <TabsList className="h-auto grid w-full grid-cols-1 sm:grid-cols-4 mb-6 bg-slate-200 dark:bg-blue-900/10 p-1.5 rounded-xl gap-1">
               <TabsTrigger
                 value="personal"
                 className="flex items-center justify-center rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-md data-[state=active]:text-primary py-2.5 text-sm font-semibold transition-all"
@@ -252,6 +283,13 @@ export default async function EmployeeProfilePage({ params }: PageProps) {
               >
                 <Wallet className="w-4 h-4 mr-2" />
                 Financials
+              </TabsTrigger>
+              <TabsTrigger
+                value="id-card"
+                className="flex items-center justify-center rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-md data-[state=active]:text-primary py-2.5 text-sm font-semibold transition-all"
+              >
+                <ShieldCheck className="w-4 h-4 mr-2" />
+                ID Verification
               </TabsTrigger>
             </TabsList>
 
@@ -492,6 +530,73 @@ export default async function EmployeeProfilePage({ params }: PageProps) {
                   </dl>
                 </CardContent>
               </Card>
+            </TabsContent>
+
+            {/* TAB: ID VERIFICATION */}
+            <TabsContent
+              value="id-card"
+              className="space-y-6 animate-in slide-in-from-bottom-2 fade-in-50 duration-500"
+            >
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* QR Code Section */}
+                <Card className="bg-card">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <ShieldCheck className="h-5 w-5 text-indigo-500" />
+                      Digital ID QR Code
+                    </CardTitle>
+                    <CardDescription>
+                      Print this QR code on the back of the physical ID card.
+                      Scanning it will redirect to the official verification
+                      page.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="flex flex-col items-center justify-center py-6">
+                    <div className="p-4 bg-white rounded-xl shadow-sm border mb-4">
+                      {/* Generates a QR code pointing to your live domain /verify/JCL... */}
+                      <QRCodeSVG
+                        value={`https://arccodetech.dev/verify/${employee.employeeNo}`}
+                        size={180}
+                        bgColor={"#ffffff"}
+                        fgColor={"#0f172a"}
+                        level={"H"}
+                        includeMargin={true}
+                      />
+                    </div>
+                    <Button variant="outline" asChild>
+                      <Link
+                        href={`/verify/${employee.employeeNo}`}
+                        target="_blank"
+                      >
+                        View Live Digital ID
+                      </Link>
+                    </Button>
+                  </CardContent>
+                </Card>
+
+                {/* Scanned ID Upload Section */}
+                <Card className="bg-card">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Printer className="h-5 w-5 text-indigo-500" />
+                      Scanned ID Records
+                    </CardTitle>
+                    <CardDescription>
+                      Upload copies of the printed physical ID card for 201 file
+                      records.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {/* 👇 HERE IS WHERE THE UPLOADER GOES 👇 */}
+                    <IdUploader
+                      employeeId={employee.id}
+                      initialFrontUrl={employee.idFrontUrl}
+                      initialBackUrl={employee.idBackUrl}
+                    />
+                    {/* 👆 IT REPLACES THE TWO DUMMY BOXES 👆 */}
+                  </CardContent>
+                </Card>
+              </div>
             </TabsContent>
 
             {/* TAB: DOCUMENTS */}

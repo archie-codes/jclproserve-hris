@@ -751,6 +751,15 @@ export function CreateEmployeeForm({
                           }
                         />
                       </FormControl>
+                      {typeof field.value === "number" &&
+                      !isNaN(field.value as number) ? (
+                        <p className="text-[10px] text-muted-foreground font-mono bg-muted/50 p-1 rounded-sm border w-fit">
+                          {new Intl.NumberFormat("en-PH", {
+                            style: "currency",
+                            currency: "PHP",
+                          }).format(field.value as number)}
+                        </p>
+                      ) : null}
                       <FormMessage />
                     </FormItem>
                   )}
@@ -778,6 +787,15 @@ export function CreateEmployeeForm({
                           }
                         />
                       </FormControl>
+                      {typeof field.value === "number" &&
+                      !isNaN(field.value as number) ? (
+                        <p className="text-[10px] text-muted-foreground font-mono bg-muted/50 p-1 rounded-sm border w-fit">
+                          {new Intl.NumberFormat("en-PH", {
+                            style: "currency",
+                            currency: "PHP",
+                          }).format(field.value as number)}
+                        </p>
+                      ) : null}
                       <FormMessage />
                     </FormItem>
                   )}

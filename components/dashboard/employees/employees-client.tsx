@@ -283,7 +283,7 @@ export function EmployeesClient({ data, userRole }: EmployeesClientProps) {
       </div>
 
       {/* 2. STATS CARDS (Matching Users Page Style) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="border-l-4 border-l-blue-500 shadow-sm bg-linear-to-br from-white to-blue-50/50 dark:from-slate-950 dark:to-slate-900">
           <CardHeader className="flex flex-row items-center justify-between space-y-0">
             <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -337,12 +337,12 @@ export function EmployeesClient({ data, userRole }: EmployeesClientProps) {
             <p className="text-xs text-muted-foreground">Past employees</p>
           </CardContent>
         </Card>
-      </div>
+      </div> */}
 
       {/* 3. MAIN CONTENT CARD */}
       <Card className="border-none shadow-md overflow-hidden bg-white dark:bg-slate-950">
         {/* Toolbar */}
-        <div className="p-4 bg-slate-50/50 dark:bg-slate-900/50 border-b flex flex-col md:flex-row items-center justify-between gap-4">
+        <div className="p-4 border-b flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
             <div className="relative w-full sm:w-64">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -459,9 +459,9 @@ export function EmployeesClient({ data, userRole }: EmployeesClientProps) {
           </div>
         </div>
 
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader className="bg-slate-50 dark:bg-slate-900/50">
+        <CardContent className="pr-3 pl-3">
+          <Table className="rounded-xl border">
+            <TableHeader className="bg-slate-50 dark:bg-slate-900/50 ">
               <TableRow className="hover:bg-transparent border-slate-100 dark:border-slate-800">
                 <TableHead className="w-[100px] text-xs font-semibold uppercase tracking-wider">
                   ID

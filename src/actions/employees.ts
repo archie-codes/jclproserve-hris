@@ -182,46 +182,6 @@ export async function createEmployee(rawData: EmployeeInput) {
 // =========================
 // 3. GENERATE NEXT ID
 // =========================
-// export async function getNextEmployeeId() {
-//   try {
-//     const lastEmployee = await db.query.employees.findFirst({
-//       orderBy: [desc(employees.createdAt)],
-//       columns: { employeeNo: true },
-//     });
-
-//     const currentYear = new Date().getFullYear();
-//     const prefix = "JCL";
-
-//     if (!lastEmployee || !lastEmployee.employeeNo) {
-//       return `${prefix}${currentYear}0001`;
-//     }
-
-//     const lastId = lastEmployee.employeeNo;
-//     const parts = lastId.split(" ");
-
-//     if (parts.length < 2) return `${prefix}${currentYear}0001`;
-
-//     const numberPart = parts[1];
-//     const idYear = parseInt(numberPart.substring(0, 3));
-//     const idSequence = parseInt(numberPart.substring(3));
-
-//     if (idYear !== currentYear) {
-//       return `${prefix}${currentYear}0001`;
-//     }
-
-//     const nextSequence = idSequence + 1;
-//     const paddedSequence = nextSequence.toString().padStart(3, "0");
-
-//     return `${prefix}${currentYear}${paddedSequence}`;
-//   } catch (error) {
-//     console.error("Error generating ID:", error);
-//     return "";
-//   }
-// }
-
-// =========================
-// 3. GENERATE NEXT ID
-// =========================
 export async function getNextEmployeeId() {
   try {
     const lastEmployee = await db.query.employees.findFirst({
@@ -267,80 +227,6 @@ export async function getNextEmployeeId() {
   }
 }
 
-// =========================
-// 4. UPDATE EMPLOYEE
-// =========================
-// type UpdateEmployeeData = Partial<EmployeeInput> & {
-//   dateResigned?: string | null;
-// };
-
-// export async function updateEmployee(id: string, data: any) {
-//   if (!id) return { success: false, error: "Missing ID" };
-
-//   try {
-//     // Sanitize Compensation before update
-//     const safeBasic =
-//       data.basicSalary !== undefined
-//         ? Math.round(Number(data.basicSalary) * 100)
-//         : undefined;
-//     const safeAllowance =
-//       data.allowance !== undefined
-//         ? Math.round(Number(data.allowance) * 100)
-//         : undefined;
-
-//     await db
-//       .update(employees)
-//       .set({
-//         firstName: data.firstName,
-//         lastName: data.lastName,
-//         middleName: sanitize(data.middleName),
-//         suffix: sanitize(data.suffix),
-//         dateOfBirth: data.dateOfBirth,
-//         gender: data.gender,
-//         civilStatus: data.civilStatus,
-//         imageUrl: sanitize(data.imageUrl),
-
-//         employeeNo: data.employeeNo,
-//         status: data.status,
-
-//         departmentId: data.departmentId,
-//         positionId: data.positionId,
-//         shiftId: data.shiftId,
-
-//         dateResigned: sanitize(data.dateResigned),
-//         dateHired: data.dateHired,
-//         dateRegularized: sanitize(data.dateRegularized),
-
-//         email: data.email,
-//         mobileNumber: sanitize(data.mobileNumber),
-//         address: sanitize(data.address),
-
-//         sssNo: sanitize(data.sssNo),
-//         philHealthNo: sanitize(data.philHealthNo),
-//         pagIbigNo: sanitize(data.pagIbigNo),
-//         tinNo: sanitize(data.tinNo),
-
-//         bankName: sanitize(data.bankName),
-//         bankAccountNo: sanitize(data.bankAccountNo),
-
-//         emergencyContactName: sanitize(data.emergencyContactName),
-//         emergencyContactPhone: sanitize(data.emergencyContactPhone),
-
-//         basicSalary: safeBasic,
-//         salaryType: data.salaryType,
-
-//         // 🚨 FIX: Map 'allowance' to 'taxableAllowance' 🚨
-//         taxableAllowance: safeAllowance,
-//       })
-//       .where(eq(employees.id, id));
-
-//     revalidatePath("/dashboard/employees");
-//     return { success: true };
-//   } catch (error) {
-//     console.error("Update Error:", error);
-//     return { success: false, error: "Failed to update employee" };
-//   }
-// }
 // =========================
 // 4. UPDATE EMPLOYEE
 // =========================
@@ -460,5 +346,30 @@ export async function updateEmployeePin(id: string, newPin: string) {
   } catch (error) {
     console.error("Update PIN error:", error);
     return { success: false, error: "Failed to update PIN." };
+  }
+}
+
+// =========================
+// SAVE ID CARD IMAGES
+// =========================
+export async function saveEmployeeIdCards(
+  id: string,
+  frontUrl: string,
+  backUrl: string,
+) {
+  try {
+    await db
+      .update(employees)
+      .set({
+        idFrontUrl: frontUrl,
+        idBackUrl: backUrl,
+      })
+      .where(eq(employees.id, id));
+
+    revalidatePath(`/dashboard/employees/${id}`);
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to save ID images:", error);
+    return { success: false, error: "Failed to save images to database." };
   }
 }

@@ -140,6 +140,8 @@ export const employees = pgTable(
 
     // --- B. PERSONAL INFO ---
     imageUrl: text("image_url"), // Profile Picture URL
+    idFrontUrl: text("id_front_url"),
+    idBackUrl: text("id_back_url"),
     firstName: varchar("first_name", { length: 100 }).notNull(),
     middleName: varchar("middle_name", { length: 100 }), // Made optional
     lastName: varchar("last_name", { length: 100 }).notNull(),
