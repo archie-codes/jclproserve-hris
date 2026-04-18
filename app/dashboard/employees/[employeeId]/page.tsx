@@ -553,9 +553,8 @@ export default async function EmployeeProfilePage({ params }: PageProps) {
                   </CardHeader>
                   <CardContent className="flex flex-col items-center justify-center py-6">
                     <div className="p-4 bg-white rounded-xl shadow-sm border mb-4">
-                      {/* Generates a QR code pointing to your live domain /verify/JCL... */}
                       <QRCodeSVG
-                        value={`https://hris.jclproserve.com/verify/${employee.employeeNo}`}
+                        value={`${typeof window !== "undefined" ? window.location.origin : ""}/verify/${employee.employeeNo}`}
                         size={180}
                         bgColor={"#ffffff"}
                         fgColor={"#0f172a"}
