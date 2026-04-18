@@ -555,7 +555,7 @@ export default async function EmployeeProfilePage({ params }: PageProps) {
                     <div className="p-4 bg-white rounded-xl shadow-sm border mb-4">
                       {/* Generates a QR code pointing to your live domain /verify/JCL... */}
                       <QRCodeSVG
-                        value={`https://arccodetech.dev/verify/${employee.employeeNo}`}
+                        value={`https://hris.jclproserve.com/verify/${employee.employeeNo}`}
                         size={180}
                         bgColor={"#ffffff"}
                         fgColor={"#0f172a"}
@@ -598,27 +598,6 @@ export default async function EmployeeProfilePage({ params }: PageProps) {
                 </Card>
               </div>
             </TabsContent>
-
-            {/* TAB: DOCUMENTS */}
-            {/* <TabsContent value="documents" className="mt-6">
-              <Card className="border-dashed bg-muted/20">
-                <CardContent className="flex flex-col items-center justify-center py-10 text-center">
-                  <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center mb-4">
-                    <Download className="h-6 w-6 text-muted-foreground" />
-                  </div>
-                  <h3 className="font-semibold text-lg text-foreground">
-                    No Documents Uploaded
-                  </h3>
-                  <p className="text-muted-foreground text-sm max-w-sm mt-1">
-                    Upload contracts, resumes, and other 201 file documents
-                    here.
-                  </p>
-                  <Button variant="outline" className="mt-4">
-                    Upload Document
-                  </Button>
-                </CardContent>
-              </Card>
-            </TabsContent> */}
           </Tabs>
         </div>
       </div>
