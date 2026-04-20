@@ -41,8 +41,13 @@ export default function ReportsPage() {
         return;
       }
 
-      // Flatten Data for Excel
-      const cleanData = res.data.map((emp: any) => ({
+      // 👇 NEW: Sort data ascending by Employee ID
+      const sortedData = [...res.data].sort((a: any, b: any) =>
+        (a.employeeNo || "").localeCompare(b.employeeNo || ""),
+      );
+
+      // Flatten Data for Excel (using sortedData)
+      const cleanData = sortedData.map((emp: any) => ({
         "Employee ID": emp.employeeNo,
         "First Name": emp.firstName,
         "Last Name": emp.lastName,
@@ -80,7 +85,16 @@ export default function ReportsPage() {
         return;
       }
 
-      const doc = new jsPDF();
+      // Sort data ascending by Employee ID
+      const sortedData = [...res.data].sort((a: any, b: any) =>
+        (a.employeeNo || "").localeCompare(b.employeeNo || ""),
+      );
+
+      // 👇 NEW: Set to A4 Landscape
+      const doc = new jsPDF({
+        orientation: "landscape",
+        format: "a4",
+      });
 
       // PDF Header
       doc.setFontSize(20);
@@ -98,10 +112,12 @@ export default function ReportsPage() {
       // PDF Table
       autoTable(doc, {
         startY: 35,
+        // 💡 Pro-Tip: Since you are in landscape now, you have room to add
+        // more columns here like "Email" or "Date Hired" if you want!
         head: [
           ["ID", "First Name", "Last Name", "Position", "Department", "Status"],
         ],
-        body: res.data.map((e: any) => [
+        body: sortedData.map((e: any) => [
           e.employeeNo,
           e.firstName,
           e.lastName,
