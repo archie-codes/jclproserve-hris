@@ -554,7 +554,7 @@ export default async function EmployeeProfilePage({ params }: PageProps) {
                   <CardContent className="flex flex-col items-center justify-center py-6">
                     <div className="p-4 bg-white rounded-xl shadow-sm border dark:border-slate-800 mb-4 flex items-center justify-center">
                       <QRCodeSVG
-                        // 👇 Updated to your official production domain
+                        // 👇 Explicitly put https://hris.jclproserve.com right here
                         value={`https://hris.jclproserve.com/verify/${employee.employeeNo}`}
                         size={180}
                         bgColor={"#ffffff"}
