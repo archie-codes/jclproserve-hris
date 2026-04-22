@@ -138,6 +138,11 @@ export function EmployeesClient({ data, userRole }: EmployeesClientProps) {
       setIsModalOpen(true);
       router.replace("/dashboard/employees");
     }
+
+    const query = searchParams.get("search");
+    if (query) {
+      setSearchQuery(decodeURIComponent(query));
+    }
   }, [searchParams, router]);
 
   useEffect(() => {

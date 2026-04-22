@@ -1,6 +1,6 @@
 import { db } from "@/src/db";
 import { employees } from "@/src/db/schema";
-import { count, desc, eq, ne } from "drizzle-orm";
+import { count, desc, eq, ne, sql } from "drizzle-orm";
 import DashboardClient from "@/components/dashboard/dashboard-client";
 import { requireAuth } from "@/lib/require-auth";
 
@@ -39,6 +39,7 @@ export default async function DashboardPage() {
       firstName: true,
       lastName: true,
       createdAt: true,
+      imageUrl: true,
     },
   });
 
@@ -49,12 +50,56 @@ export default async function DashboardPage() {
     resignedEmployees: resignedEmpResult.value,
   };
 
+  // Prepared previously
   const formattedRecent = recentJoiners.map((emp) => ({
     id: emp.id,
     name: `${emp.firstName} ${emp.lastName}`,
     // 🔴 FIX 3: Extract the 'title' string from the position object
     position: emp.position ? emp.position.title : "No Position",
     createdAt: emp.createdAt,
+    imageUrl: emp.imageUrl,
+  }));
+
+  // 6. Fetch Upcoming Birthdays (Current Month)
+  const currentMonth = new Date().getMonth() + 1; // 1-12
+  const upcomingBirthdays = await db.query.employees.findMany({
+    where: sql`EXTRACT(MONTH FROM ${employees.dateOfBirth}) = ${currentMonth}`,
+    columns: {
+      id: true,
+      firstName: true,
+      lastName: true,
+      dateOfBirth: true,
+      imageUrl: true,
+    },
+    limit: 5,
+  });
+
+  const formattedBirthdays = upcomingBirthdays.map((emp) => ({
+    id: emp.id,
+    name: `${emp.firstName} ${emp.lastName}`,
+    dateOfBirth: emp.dateOfBirth,
+    imageUrl: emp.imageUrl,
+  }));
+
+  // 7. Fetch Birthdays (Next Month)
+  const nextMonth = currentMonth === 12 ? 1 : currentMonth + 1;
+  const nextMonthBirthdays = await db.query.employees.findMany({
+    where: sql`EXTRACT(MONTH FROM ${employees.dateOfBirth}) = ${nextMonth}`,
+    columns: {
+      id: true,
+      firstName: true,
+      lastName: true,
+      dateOfBirth: true,
+      imageUrl: true,
+    },
+    limit: 5,
+  });
+
+  const formattedNextMonthBirthdays = nextMonthBirthdays.map((emp) => ({
+    id: emp.id,
+    name: `${emp.firstName} ${emp.lastName}`,
+    dateOfBirth: emp.dateOfBirth,
+    imageUrl: emp.imageUrl,
   }));
 
   return (
@@ -62,6 +107,8 @@ export default async function DashboardPage() {
       user={{ name: user.name, role: user.role }}
       stats={stats}
       recentEmployees={formattedRecent}
+      birthdaysThisMonth={formattedBirthdays}
+      birthdaysNextMonth={formattedNextMonthBirthdays}
     />
   );
 }

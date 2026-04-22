@@ -305,7 +305,7 @@ export function CreateEmployeeForm({
                       }}
                       appearance={{
                         button:
-                          "bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 rounded-md shadow-sm transition-colors text-sm font-medium",
+                          "bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md shadow-sm transition-colors text-sm font-medium",
                         container: "w-max",
                         allowedContent: "hidden",
                       }}

@@ -218,7 +218,7 @@ export function Sidebar({
                     toggleGroup(item.label);
                   }}
                   className={cn(
-                    "w-full flex items-center justify-between gap-3 rounded-lg py-2.5 text-sm font-medium transition-all duration-300 group overflow-hidden",
+                    "w-full flex items-center justify-between gap-3 rounded-lg py-2.5 text-md font-medium transition-all duration-300 group overflow-hidden",
                     isCollapsed ? "px-0 justify-center" : "px-3",
                     isGroupActive && !isOpen
                       ? "text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/10"
