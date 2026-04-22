@@ -283,7 +283,7 @@ export function EmployeesClient({ data, userRole }: EmployeesClientProps) {
       </div>
 
       {/* 2. STATS CARDS (Matching Users Page Style) */}
-      {/* <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="border-l-4 border-l-blue-500 shadow-sm bg-linear-to-br from-white to-blue-50/50 dark:from-slate-950 dark:to-slate-900">
           <CardHeader className="flex flex-row items-center justify-between space-y-0">
             <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -337,7 +337,7 @@ export function EmployeesClient({ data, userRole }: EmployeesClientProps) {
             <p className="text-xs text-muted-foreground">Past employees</p>
           </CardContent>
         </Card>
-      </div> */}
+      </div>
 
       {/* 3. MAIN CONTENT CARD */}
       <Card className="border-none shadow-md overflow-hidden bg-white dark:bg-slate-950">

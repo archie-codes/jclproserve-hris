@@ -1,3 +1,7 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { animate } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -17,6 +21,22 @@ export function StatCard({
   trend,
   color,
 }: StatCardProps) {
+  const [displayValue, setDisplayValue] = useState(0);
+
+  useEffect(() => {
+    const numericValue = parseInt(value, 10);
+    if (!isNaN(numericValue)) {
+      const controls = animate(0, numericValue, {
+        duration: 1.5,
+        ease: "easeOut",
+        onUpdate(v) {
+          setDisplayValue(Math.round(v));
+        },
+      });
+      return () => controls.stop();
+    }
+  }, [value]);
+
   // Map simple color names to complex Tailwind classes
   const styles = {
     blue: {
@@ -68,7 +88,7 @@ export function StatCard({
         <Icon className={cn("h-4 w-4", currentStyle.icon)} />
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold text-foreground">{value}</div>
+        <div className="text-2xl font-bold text-foreground">{displayValue}</div>
         <p className="text-xs text-muted-foreground mt-1">{trend}</p>
       </CardContent>
     </Card>

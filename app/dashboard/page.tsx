@@ -23,10 +23,10 @@ export default async function DashboardPage() {
     .from(employees)
     .where(eq(employees.status, "RESIGNED"));
 
-  // 5. Fetch 5 Most Recent Employees
+  // 5. Fetch 10 Most Recent Employees
   const recentJoiners = await db.query.employees.findMany({
     orderBy: [desc(employees.createdAt)],
-    limit: 4,
+    limit: 10,
 
     // 🔴 FIX 1: Use 'with' to fetch the Position relation
     with: {
