@@ -18,6 +18,7 @@ import {
   CalendarDays,
   Palmtree,
   MapPin,
+  Copy,
 } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import { StatCard } from "@/components/dashboard/stat-card";
@@ -41,6 +42,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import confetti from "canvas-confetti";
+import { toast } from "sonner";
 
 interface DashboardProps {
   user: {
@@ -751,7 +753,18 @@ export default function DashboardClient({
               <Sparkles className="w-8 h-8 text-pink-200 dark:text-pink-900/50" />
             </div>
           </div>
-          <div className="flex justify-center pb-2">
+          <div className="grid grid-cols-2 gap-3 pb-2 px-2 w-full">
+            <Button
+              className="w-full bg-pink-600 hover:bg-pink-700 text-white shadow-sm"
+              onClick={() => {
+                const url = `${window.location.origin}/greetings/birthday/${selectedBirthday?.id}`;
+                navigator.clipboard.writeText(url);
+                toast.success("Greeting link copied!");
+              }}
+            >
+              <Copy className="h-4 w-4 mr-2" />
+              Copy Link
+            </Button>
             <Button
               variant="outline"
               className="w-full text-pink-600 border-pink-200 hover:bg-pink-50 hover:text-pink-700 dark:border-pink-900/40 dark:hover:bg-pink-900/20"
