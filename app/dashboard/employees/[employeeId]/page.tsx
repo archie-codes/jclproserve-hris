@@ -262,7 +262,7 @@ export default async function EmployeeProfilePage({ params }: PageProps) {
         {/* --- RIGHT CONTENT: DETAILS --- */}
         <div className="lg:col-span-8">
           <Tabs defaultValue="personal" className="w-full">
-            <TabsList className="h-auto grid w-full grid-cols-1 sm:grid-cols-4 mb-6 bg-slate-200 dark:bg-blue-900/10 p-1.5 rounded-xl gap-1">
+            <TabsList className="h-auto grid w-full grid-cols-1 sm:grid-cols-4 mb-2 bg-indigo-100 dark:bg-blue-900 p-1.5 rounded-xl gap-1">
               <TabsTrigger
                 value="personal"
                 className="flex items-center justify-center rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-md data-[state=active]:text-primary py-2.5 text-sm font-semibold transition-all"
@@ -282,7 +282,7 @@ export default async function EmployeeProfilePage({ params }: PageProps) {
                 className="flex items-center justify-center rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-md data-[state=active]:text-primary py-2.5 text-sm font-semibold transition-all"
               >
                 <Wallet className="w-4 h-4 mr-2" />
-                Financials
+                Salary
               </TabsTrigger>
               <TabsTrigger
                 value="id-card"
@@ -296,7 +296,7 @@ export default async function EmployeeProfilePage({ params }: PageProps) {
             {/* TAB: PERSONAL */}
             <TabsContent
               value="personal"
-              className="space-y-6 animate-in slide-in-from-bottom-2 fade-in-50 duration-500"
+              className="space-y-6 animate-in slide-in-from-bottom-2 fade-in-50 duration-75"
             >
               <Card className="bg-card">
                 <CardHeader>
@@ -365,9 +365,10 @@ export default async function EmployeeProfilePage({ params }: PageProps) {
               </Card>
             </TabsContent>
 
+            {/* TAB: EMPLOYMENT */}
             <TabsContent
               value="employment"
-              className="space-y-6 animate-in slide-in-from-bottom-2 fade-in-50 duration-500"
+              className="space-y-6 animate-in slide-in-from-bottom-2 fade-in-50 duration-75"
             >
               <Card className="bg-card">
                 <CardHeader>
@@ -457,7 +458,7 @@ export default async function EmployeeProfilePage({ params }: PageProps) {
             {/* TAB: FINANCIAL (UPDATED) */}
             <TabsContent
               value="financial"
-              className="space-y-6 animate-in slide-in-from-bottom-2 fade-in-50 duration-500"
+              className="space-y-6 animate-in slide-in-from-bottom-2 fade-in-50 duration-75"
             >
               {/* 1. Compensation Section */}
               <Card className="bg-card border-l-4 border-l-emerald-500">
@@ -535,7 +536,7 @@ export default async function EmployeeProfilePage({ params }: PageProps) {
             {/* TAB: ID VERIFICATION */}
             <TabsContent
               value="id-card"
-              className="space-y-6 animate-in slide-in-from-bottom-2 fade-in-50 duration-500"
+              className="space-y-6 animate-in slide-in-from-bottom-2 fade-in-50 duration-75"
             >
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* QR Code Section */}

@@ -16,19 +16,19 @@ export function EditProfileButton({ employee }: EditProfileButtonProps) {
 
   return (
     <>
-      <Button 
-        size="sm" 
-        className="flex-1 sm:flex-none print:hidden" 
+      <Button
+        size="sm"
+        className="flex-1 sm:flex-none print:hidden bg-indigo-600 hover:bg-indigo-700 text-white"
         onClick={() => setOpen(true)}
       >
         <Edit className="mr-2 h-4 w-4" /> Edit Profile
       </Button>
 
       {/* The Modal is rendered here but hidden until open is true */}
-      <EditEmployeeModal 
-        open={open} 
-        onOpenChange={setOpen} 
-        employee={employee} 
+      <EditEmployeeModal
+        open={open}
+        onOpenChange={setOpen}
+        employee={employee}
       />
     </>
   );
